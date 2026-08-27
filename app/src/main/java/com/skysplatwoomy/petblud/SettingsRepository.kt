@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,22 @@ class SettingsRepository(context: Context) {
         .map { preferences ->
             val legacyBubbleOpacity = preferences[HOOTS_BUBBLE_OPACITY_PERCENT]
                 ?: PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+            val legacyBorderColor = preferences[HOOTS_BUBBLE_BORDER_COLOR]
+                ?: PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
+            val legacyFillColor = preferences[HOOTS_BUBBLE_FILL_COLOR]
+                ?: PetSettings.DEFAULT_BUBBLE_FILL_COLOR
+            val legacyTextOpacity = preferences[HOOTS_BUBBLE_TEXT_OPACITY_PERCENT]
+                ?: PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+            val legacyAppearance = BubbleAppearance(
+                borderColor = legacyBorderColor,
+                fillColor = legacyFillColor,
+                textColor = BubbleAppearance.contrastTextColor(legacyFillColor),
+                borderOpacityPercent = preferences[HOOTS_BUBBLE_BORDER_OPACITY_PERCENT]
+                    ?: legacyBubbleOpacity,
+                fillOpacityPercent = preferences[HOOTS_BUBBLE_FILL_OPACITY_PERCENT]
+                    ?: legacyBubbleOpacity,
+                textOpacityPercent = legacyTextOpacity,
+            )
             val seedy = PetSettings(
                 gravity = preferences[GRAVITY] ?: true,
                 tiltGravity = preferences[TILT_GRAVITY] ?: false,
@@ -48,16 +65,35 @@ class SettingsRepository(context: Context) {
                 collision = false,
                 disablePhysicsInteractions = preferences[HOOTS_DISABLE_PHYSICS_INTERACTIONS] ?: false,
                 showChatGptNotifications = preferences[HOOTS_SHOW_CHATGPT_NOTIFICATIONS] ?: false,
-                bubbleBorderColor = preferences[HOOTS_BUBBLE_BORDER_COLOR]
-                    ?: PetSettings.DEFAULT_BUBBLE_BORDER_COLOR,
-                bubbleFillColor = preferences[HOOTS_BUBBLE_FILL_COLOR]
-                    ?: PetSettings.DEFAULT_BUBBLE_FILL_COLOR,
-                bubbleBorderOpacityPercent = preferences[HOOTS_BUBBLE_BORDER_OPACITY_PERCENT]
-                    ?: legacyBubbleOpacity,
-                bubbleFillOpacityPercent = preferences[HOOTS_BUBBLE_FILL_OPACITY_PERCENT]
-                    ?: legacyBubbleOpacity,
-                bubbleTextOpacityPercent = preferences[HOOTS_BUBBLE_TEXT_OPACITY_PERCENT]
-                    ?: PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT,
+                bubbleColorMode = BubbleColorMode.fromWireName(preferences[HOOTS_BUBBLE_COLOR_MODE]),
+                bubbleDarkAppearance = BubbleAppearance(
+                    borderColor = preferences[HOOTS_BUBBLE_DARK_BORDER_COLOR]
+                        ?: BubbleAppearance.DEFAULT_BORDER_COLOR,
+                    fillColor = preferences[HOOTS_BUBBLE_DARK_FILL_COLOR]
+                        ?: BubbleAppearance.DEFAULT_DARK_FILL_COLOR,
+                    textColor = preferences[HOOTS_BUBBLE_DARK_TEXT_COLOR]
+                        ?: BubbleAppearance.DEFAULT_DARK_TEXT_COLOR,
+                    borderOpacityPercent = preferences[HOOTS_BUBBLE_DARK_BORDER_OPACITY_PERCENT]
+                        ?: BubbleAppearance.DEFAULT_OPACITY_PERCENT,
+                    fillOpacityPercent = preferences[HOOTS_BUBBLE_DARK_FILL_OPACITY_PERCENT]
+                        ?: BubbleAppearance.DEFAULT_OPACITY_PERCENT,
+                    textOpacityPercent = preferences[HOOTS_BUBBLE_DARK_TEXT_OPACITY_PERCENT]
+                        ?: BubbleAppearance.DEFAULT_OPACITY_PERCENT,
+                ),
+                bubbleLightAppearance = BubbleAppearance(
+                    borderColor = preferences[HOOTS_BUBBLE_LIGHT_BORDER_COLOR]
+                        ?: legacyAppearance.borderColor,
+                    fillColor = preferences[HOOTS_BUBBLE_LIGHT_FILL_COLOR]
+                        ?: legacyAppearance.fillColor,
+                    textColor = preferences[HOOTS_BUBBLE_LIGHT_TEXT_COLOR]
+                        ?: legacyAppearance.textColor,
+                    borderOpacityPercent = preferences[HOOTS_BUBBLE_LIGHT_BORDER_OPACITY_PERCENT]
+                        ?: legacyAppearance.borderOpacityPercent,
+                    fillOpacityPercent = preferences[HOOTS_BUBBLE_LIGHT_FILL_OPACITY_PERCENT]
+                        ?: legacyAppearance.fillOpacityPercent,
+                    textOpacityPercent = preferences[HOOTS_BUBBLE_LIGHT_TEXT_OPACITY_PERCENT]
+                        ?: legacyAppearance.textOpacityPercent,
+                ),
                 bubbleTapOpensChatGpt = preferences[HOOTS_BUBBLE_TAP_OPENS_CHATGPT] ?: false,
             ).normalized()
             AppSettings(
@@ -128,12 +164,40 @@ class SettingsRepository(context: Context) {
         preferences[HOOTS_SIZE_PERCENT] = value.sizePercent
         preferences[HOOTS_DISABLE_PHYSICS_INTERACTIONS] = value.disablePhysicsInteractions
         preferences[HOOTS_SHOW_CHATGPT_NOTIFICATIONS] = value.showChatGptNotifications
-        preferences[HOOTS_BUBBLE_BORDER_COLOR] = value.bubbleBorderColor
-        preferences[HOOTS_BUBBLE_FILL_COLOR] = value.bubbleFillColor
-        preferences[HOOTS_BUBBLE_BORDER_OPACITY_PERCENT] = value.bubbleBorderOpacityPercent
-        preferences[HOOTS_BUBBLE_FILL_OPACITY_PERCENT] = value.bubbleFillOpacityPercent
-        preferences[HOOTS_BUBBLE_TEXT_OPACITY_PERCENT] = value.bubbleTextOpacityPercent
+        preferences[HOOTS_BUBBLE_COLOR_MODE] = value.bubbleColorMode.wireName
+        writeBubbleAppearance(preferences, value.bubbleDarkAppearance, dark = true)
+        writeBubbleAppearance(preferences, value.bubbleLightAppearance, dark = false)
+        preferences[HOOTS_BUBBLE_BORDER_COLOR] = value.bubbleLightAppearance.borderColor
+        preferences[HOOTS_BUBBLE_FILL_COLOR] = value.bubbleLightAppearance.fillColor
+        preferences[HOOTS_BUBBLE_BORDER_OPACITY_PERCENT] =
+            value.bubbleLightAppearance.borderOpacityPercent
+        preferences[HOOTS_BUBBLE_FILL_OPACITY_PERCENT] =
+            value.bubbleLightAppearance.fillOpacityPercent
+        preferences[HOOTS_BUBBLE_TEXT_OPACITY_PERCENT] =
+            value.bubbleLightAppearance.textOpacityPercent
         preferences[HOOTS_BUBBLE_TAP_OPENS_CHATGPT] = value.bubbleTapOpensChatGpt
+    }
+
+    private fun writeBubbleAppearance(
+        preferences: androidx.datastore.preferences.core.MutablePreferences,
+        appearance: BubbleAppearance,
+        dark: Boolean,
+    ) {
+        if (dark) {
+            preferences[HOOTS_BUBBLE_DARK_BORDER_COLOR] = appearance.borderColor
+            preferences[HOOTS_BUBBLE_DARK_FILL_COLOR] = appearance.fillColor
+            preferences[HOOTS_BUBBLE_DARK_TEXT_COLOR] = appearance.textColor
+            preferences[HOOTS_BUBBLE_DARK_BORDER_OPACITY_PERCENT] = appearance.borderOpacityPercent
+            preferences[HOOTS_BUBBLE_DARK_FILL_OPACITY_PERCENT] = appearance.fillOpacityPercent
+            preferences[HOOTS_BUBBLE_DARK_TEXT_OPACITY_PERCENT] = appearance.textOpacityPercent
+        } else {
+            preferences[HOOTS_BUBBLE_LIGHT_BORDER_COLOR] = appearance.borderColor
+            preferences[HOOTS_BUBBLE_LIGHT_FILL_COLOR] = appearance.fillColor
+            preferences[HOOTS_BUBBLE_LIGHT_TEXT_COLOR] = appearance.textColor
+            preferences[HOOTS_BUBBLE_LIGHT_BORDER_OPACITY_PERCENT] = appearance.borderOpacityPercent
+            preferences[HOOTS_BUBBLE_LIGHT_FILL_OPACITY_PERCENT] = appearance.fillOpacityPercent
+            preferences[HOOTS_BUBBLE_LIGHT_TEXT_OPACITY_PERCENT] = appearance.textOpacityPercent
+        }
     }
 
     companion object {
@@ -168,6 +232,31 @@ class SettingsRepository(context: Context) {
             doublePreferencesKey("hoots_bubble_text_opacity_percent")
         private val HOOTS_BUBBLE_TAP_OPENS_CHATGPT =
             booleanPreferencesKey("hoots_bubble_tap_opens_chatgpt")
+        private val HOOTS_BUBBLE_COLOR_MODE = stringPreferencesKey("hoots_bubble_color_mode")
+        private val HOOTS_BUBBLE_DARK_BORDER_COLOR =
+            intPreferencesKey("hoots_bubble_dark_border_color")
+        private val HOOTS_BUBBLE_DARK_FILL_COLOR =
+            intPreferencesKey("hoots_bubble_dark_fill_color")
+        private val HOOTS_BUBBLE_DARK_TEXT_COLOR =
+            intPreferencesKey("hoots_bubble_dark_text_color")
+        private val HOOTS_BUBBLE_DARK_BORDER_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_dark_border_opacity_percent")
+        private val HOOTS_BUBBLE_DARK_FILL_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_dark_fill_opacity_percent")
+        private val HOOTS_BUBBLE_DARK_TEXT_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_dark_text_opacity_percent")
+        private val HOOTS_BUBBLE_LIGHT_BORDER_COLOR =
+            intPreferencesKey("hoots_bubble_light_border_color")
+        private val HOOTS_BUBBLE_LIGHT_FILL_COLOR =
+            intPreferencesKey("hoots_bubble_light_fill_color")
+        private val HOOTS_BUBBLE_LIGHT_TEXT_COLOR =
+            intPreferencesKey("hoots_bubble_light_text_color")
+        private val HOOTS_BUBBLE_LIGHT_BORDER_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_light_border_opacity_percent")
+        private val HOOTS_BUBBLE_LIGHT_FILL_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_light_fill_opacity_percent")
+        private val HOOTS_BUBBLE_LIGHT_TEXT_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_light_text_opacity_percent")
         private val SEEDY_HOOTS_COLLISION = booleanPreferencesKey("seedy_hoots_collision")
     }
 }

@@ -3,7 +3,6 @@ package com.skysplatwoomy.petblud
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
@@ -63,49 +62,37 @@ class HootsStatusBubbleView(context: Context) : LinearLayout(context) {
         bodyView.visibility = if (status.body.isEmpty()) View.GONE else View.VISIBLE
     }
 
-    fun applyAppearance(
-        border: Int,
-        borderOpacity: Double,
-        fill: Int,
-        fillOpacity: Double,
-        textOpacity: Double,
-    ) {
-        val normalizedBorderOpacity = borderOpacity.coerceIn(
-            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
-            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
-        )
-        val normalizedFillOpacity = fillOpacity.coerceIn(
-            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
-            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
-        )
-        val normalizedTextOpacity = textOpacity.coerceIn(
-            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
-            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
-        )
+    fun applyAppearance(value: BubbleAppearance) {
+        val appearance = value.normalized()
         if (
-            borderColor == border && fillColor == fill &&
-            borderOpacityPercent == normalizedBorderOpacity &&
-            fillOpacityPercent == normalizedFillOpacity &&
-            textOpacityPercent == normalizedTextOpacity
+            borderColor == appearance.borderColor && fillColor == appearance.fillColor &&
+            borderOpacityPercent == appearance.borderOpacityPercent &&
+            fillOpacityPercent == appearance.fillOpacityPercent &&
+            textOpacityPercent == appearance.textOpacityPercent &&
+            titleView.currentTextColor == ColorUtils.setAlphaComponent(
+                appearance.textColor,
+                opacityAlpha(appearance.textOpacityPercent),
+            )
         ) {
             return
         }
-        borderColor = border
-        fillColor = fill
-        borderOpacityPercent = normalizedBorderOpacity
-        fillOpacityPercent = normalizedFillOpacity
-        textOpacityPercent = normalizedTextOpacity
-        val borderAlpha = opacityAlpha(normalizedBorderOpacity)
-        val fillAlpha = opacityAlpha(normalizedFillOpacity)
-        val textAlpha = opacityAlpha(normalizedTextOpacity)
-        strokePaint.color = ColorUtils.setAlphaComponent(border, borderAlpha)
-        fillPaint.color = ColorUtils.setAlphaComponent(fill, fillAlpha)
-        val opaqueTextColor = if (ColorUtils.calculateLuminance(fill) < 0.42) {
-            Color.WHITE
-        } else {
-            ContextCompat.getColor(context, R.color.pet_bg)
-        }
-        val textColor = ColorUtils.setAlphaComponent(opaqueTextColor, textAlpha)
+        borderColor = appearance.borderColor
+        fillColor = appearance.fillColor
+        borderOpacityPercent = appearance.borderOpacityPercent
+        fillOpacityPercent = appearance.fillOpacityPercent
+        textOpacityPercent = appearance.textOpacityPercent
+        strokePaint.color = ColorUtils.setAlphaComponent(
+            appearance.borderColor,
+            opacityAlpha(appearance.borderOpacityPercent),
+        )
+        fillPaint.color = ColorUtils.setAlphaComponent(
+            appearance.fillColor,
+            opacityAlpha(appearance.fillOpacityPercent),
+        )
+        val textColor = ColorUtils.setAlphaComponent(
+            appearance.textColor,
+            opacityAlpha(appearance.textOpacityPercent),
+        )
         titleView.setTextColor(textColor)
         bodyView.setTextColor(textColor)
         invalidate()

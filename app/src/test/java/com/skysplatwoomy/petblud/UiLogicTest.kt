@@ -189,26 +189,43 @@ class UiLogicTest {
     @Test
     fun bubbleAppearanceNormalizesOpacityColorsAndHootsIdleScale() {
         val normalized = PetSettings(
-            bubbleBorderColor = 0x00112233,
-            bubbleFillColor = 0x00445566,
-            bubbleBorderOpacityPercent = -50.0,
-            bubbleFillOpacityPercent = 150.0,
-            bubbleTextOpacityPercent = 45.0,
+            bubbleDarkAppearance = BubbleAppearance(
+                borderColor = 0x00112233,
+                fillColor = 0x00445566,
+                textColor = 0x00778899,
+                borderOpacityPercent = -50.0,
+                fillOpacityPercent = 150.0,
+                textOpacityPercent = 45.0,
+            ),
         ).normalized()
+        val appearance = normalized.bubbleDarkAppearance
 
-        assertEquals(0xFF112233.toInt(), normalized.bubbleBorderColor)
-        assertEquals(0xFF445566.toInt(), normalized.bubbleFillColor)
+        assertEquals(0xFF112233.toInt(), appearance.borderColor)
+        assertEquals(0xFF445566.toInt(), appearance.fillColor)
+        assertEquals(0xFF778899.toInt(), appearance.textColor)
         assertEquals(
             PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
-            normalized.bubbleBorderOpacityPercent,
+            appearance.borderOpacityPercent,
             0.0,
         )
         assertEquals(
             PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
-            normalized.bubbleFillOpacityPercent,
+            appearance.fillOpacityPercent,
             0.0,
         )
-        assertEquals(45.0, normalized.bubbleTextOpacityPercent, 0.0)
+        assertEquals(45.0, appearance.textOpacityPercent, 0.0)
+        assertEquals(
+            normalized.bubbleDarkAppearance,
+            normalized.copy(bubbleColorMode = BubbleColorMode.DARK).bubbleAppearance(false),
+        )
+        assertEquals(
+            normalized.bubbleLightAppearance,
+            normalized.copy(bubbleColorMode = BubbleColorMode.SYSTEM).bubbleAppearance(false),
+        )
+        assertEquals(
+            normalized.bubbleDarkAppearance,
+            normalized.copy(bubbleColorMode = BubbleColorMode.SYSTEM).bubbleAppearance(true),
+        )
         assertEquals(
             SpriteVisualScale.HOOTS_IDLE_SCALE,
             SpriteVisualScale.forAnimation(PetSpecies.HOOTS, PetAnimation.IDLE),

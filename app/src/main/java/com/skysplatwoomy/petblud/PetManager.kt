@@ -167,6 +167,8 @@ class PetManager(
         pet.dragDy = localY
         pet.pressRootX = rawX
         pet.pressRootY = rawY
+        pet.dragVx = 0.0
+        pet.dragVy = 0.0
         pet.dragSamples.clear()
         pet.dragSamples += DragSample(timeSeconds, rawX, rawY)
     }
@@ -185,11 +187,22 @@ class PetManager(
             pet.pendingOneShot = null
             pet.dragSamples.clear()
             pet.dragSamples += DragSample(timeSeconds, rawX, rawY)
-            setAnimation(pet, PetAnimation.JUMP, loop = true, restart = true)
+            pet.dragVx = rawX - pet.pressRootX
+            pet.dragVy = rawY - pet.pressRootY
+            setAnimation(
+                pet,
+                dragAnimationFor(pet.dragVx, pet.dragVy, pet.facing),
+                loop = true,
+                restart = true,
+            )
         }
 
         recordDragSample(pet, rawX, rawY, timeSeconds)
         val velocity = velocityFromSamples(pet.dragSamples)
+        if (hypot(velocity.first, velocity.second) > DRAG_DIRECTION_EPSILON) {
+            pet.dragVx = velocity.first
+            pet.dragVy = velocity.second
+        }
         if (physicsInteractionsDisabled(pet)) {
             pet.vx = 0.0
             pet.vy = 0.0
@@ -231,6 +244,8 @@ class PetManager(
             }
         }
         pet.dragSamples.clear()
+        pet.dragVx = 0.0
+        pet.dragVy = 0.0
         pet.dragging = false
         pet.didDrag = false
     }
@@ -238,6 +253,8 @@ class PetManager(
     fun cancelPointer(id: Long) {
         find(id)?.apply {
             dragSamples.clear()
+            dragVx = 0.0
+            dragVy = 0.0
             dragging = false
             didDrag = false
             if (physicsInteractionsDisabled(this)) {
@@ -378,13 +395,16 @@ class PetManager(
         maybeIdleSpecial(pet, dt, onGravitySurface && !activelyDragging)
         pickAnimation(pet, onGravitySurface, impactSpeed)
         if (pet.animation == null) pickAnimation(pet, onGravitySurface, 0.0)
-        if (pet.animation != null && !activelyDragging) advanceAnimation(pet, dt)
+        if (pet.animation != null) advanceAnimation(pet, dt)
     }
 
     private fun pickAnimation(pet: PetState, onGravitySurface: Boolean, impactSpeed: Double) {
         if (pet.dragging && pet.didDrag) {
-            setAnimation(pet, PetAnimation.JUMP, loop = true)
-            pet.frameIndex = minOf(2, PetAnimation.JUMP.frameCount - 1)
+            setAnimation(
+                pet,
+                dragAnimationFor(pet.dragVx, pet.dragVy, pet.facing),
+                loop = true,
+            )
             return
         }
         if (pet.animation != null && oneShotPlaying(pet)) return
@@ -582,6 +602,23 @@ class PetManager(
         return clampVelocity((last.x - first.x) / dt) to clampVelocity((last.y - first.y) / dt)
     }
 
+    internal fun dragAnimationFor(
+        velocityX: Double,
+        velocityY: Double,
+        facing: Int = 1,
+    ): PetAnimation {
+        if (hypot(velocityX, velocityY) <= DRAG_DIRECTION_EPSILON) {
+            return if (facing >= 0) PetAnimation.WALK_RIGHT else PetAnimation.WALK_LEFT
+        }
+        return if (abs(velocityX) >= abs(velocityY)) {
+            if (velocityX >= 0.0) PetAnimation.WALK_RIGHT else PetAnimation.WALK_LEFT
+        } else if (velocityY < 0.0) {
+            PetAnimation.JUMP
+        } else {
+            PetAnimation.FALL
+        }
+    }
+
     private fun applyCollisions() {
         if (mutablePets.size <= COLLISION_GRID_THRESHOLD) {
             for (index in mutablePets.indices) {
@@ -718,6 +755,7 @@ class PetManager(
         const val DRAG_THRESHOLD = 18.0
         const val MAX_VELOCITY = 1800.0
         const val DRAG_SAMPLE_WINDOW_SECONDS = 0.12
+        const val DRAG_DIRECTION_EPSILON = 1.0
         const val COLLISION_GRID_THRESHOLD = 24
         const val TAU = Math.PI * 2.0
         const val HOP_SPEED = 720.0

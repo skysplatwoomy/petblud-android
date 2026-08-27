@@ -47,11 +47,16 @@
     <string name="bubble_appearance">Bubble appearance</string>
     <string name="bubble_border">Border</string>
     <string name="bubble_fill">Fill</string>
-    <string name="bubble_text_opacity">Text opacity</string>
+    <string name="bubble_text">Text</string>
+    <string name="bubble_colour_preset">Colour preset</string>
+    <string name="dark">Dark</string>
+    <string name="light">Light</string>
+    <string name="system">System</string>
     <string name="reset_bubble_appearance">Reset bubble appearance</string>
     <string name="bubble_color_opacity_value">%1$s %2$s · %3$d%%</string>
     <string name="choose_bubble_border">Choose bubble border colour</string>
     <string name="choose_bubble_fill">Choose bubble fill colour</string>
+    <string name="choose_bubble_text">Choose bubble text colour</string>
     <string name="color_hue_value">Hue: %1$d°</string>
     <string name="color_saturation_value">Saturation: %1$d%%</string>
     <string name="color_brightness_value">Brightness: %1$d%%</string>
@@ -60,7 +65,6 @@
     <string name="edit_saturation">Enter saturation</string>
     <string name="edit_brightness">Enter brightness</string>
     <string name="edit_colour_opacity">Enter colour opacity</string>
-    <string name="edit_text_opacity">Enter text opacity</string>
     <string name="edit_physics_multiplier">Enter physics multiplier</string>
     <string name="edit_pet_size">Enter pet size</string>
     <string name="number_range">Range: %1$s–%2$s</string>

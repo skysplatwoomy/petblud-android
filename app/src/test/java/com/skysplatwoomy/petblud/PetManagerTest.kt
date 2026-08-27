@@ -30,8 +30,14 @@ class PetManagerTest {
         assertFalse(normalized.avoidKeyboard)
         assertFalse(normalized.disablePhysicsInteractions)
         assertFalse(normalized.bubbleTapOpensChatGpt)
-        assertEquals(PetSettings.DEFAULT_BUBBLE_BORDER_COLOR, normalized.bubbleBorderColor)
-        assertEquals(PetSettings.DEFAULT_BUBBLE_FILL_COLOR, normalized.bubbleFillColor)
+        assertEquals(
+            PetSettings.DEFAULT_BUBBLE_BORDER_COLOR,
+            normalized.bubbleLightAppearance.borderColor,
+        )
+        assertEquals(
+            PetSettings.DEFAULT_BUBBLE_FILL_COLOR,
+            normalized.bubbleLightAppearance.fillColor,
+        )
     }
 
     @Test
@@ -547,6 +553,47 @@ class PetManagerTest {
         assertEquals(0.0, pet.vy, 0.001)
         assertEquals(PetAnimation.DIZZY, pet.pendingOneShot)
         assertFalse(pet.dragging)
+    }
+
+    @Test
+    fun draggingUsesAnimatedSpritesForEveryScreenDirectionAndBothSpecies() {
+        val manager = manager()
+        assertEquals(PetAnimation.WALK_RIGHT, manager.dragAnimationFor(500.0, 20.0))
+        assertEquals(PetAnimation.WALK_LEFT, manager.dragAnimationFor(-500.0, 20.0))
+        assertEquals(PetAnimation.JUMP, manager.dragAnimationFor(20.0, -500.0))
+        assertEquals(PetAnimation.FALL, manager.dragAnimationFor(20.0, 500.0))
+
+        PetSpecies.entries.forEach { species ->
+            val pet = manager.spawn(1, species).single()
+            manager.pointerDown(pet.id, 10.0, 10.0, 100.0, 100.0, 1.0)
+            manager.pointerMove(pet.id, 180.0, 100.0, 1.02)
+            manager.pointerMove(pet.id, 260.0, 100.0, 1.08)
+            repeat(4) { manager.tick(PetManager.MAX_DELTA_SECONDS) }
+
+            assertEquals(PetAnimation.WALK_RIGHT, pet.animation)
+            assertTrue(pet.frameIndex > 0)
+            manager.cancelPointer(pet.id)
+        }
+    }
+
+    @Test
+    fun physicsLockedHootsStillUsesDragDirectionAnimation() {
+        val manager = PetManager(
+            hootsSettings = PetSettings(disablePhysicsInteractions = true),
+            bounds = WorldBounds(1080.0, 1920.0),
+            random = Random(7),
+        )
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+
+        manager.pointerDown(hoots.id, 10.0, 10.0, 300.0, 300.0, 1.0)
+        manager.pointerMove(hoots.id, 300.0, 220.0, 1.02)
+        manager.pointerMove(hoots.id, 300.0, 140.0, 1.08)
+        repeat(4) { manager.tick(PetManager.MAX_DELTA_SECONDS) }
+
+        assertEquals(PetAnimation.JUMP, hoots.animation)
+        assertEquals(0.0, hoots.vx, 0.0)
+        assertEquals(0.0, hoots.vy, 0.0)
+        assertTrue(hoots.frameIndex > 0)
     }
 
     @Test

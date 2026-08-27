@@ -4,8 +4,8 @@ Verification performed on 2026-08-27 for PetBlud 0.7.2.
 
 ## Automated checks
 
-- `testDebugUnitTest`: 42 tests, 0 failures, 0 errors.
-- `testReleaseUnitTest`: 42 tests, 0 failures, 0 errors.
+- `testDebugUnitTest`: 44 tests, 0 failures, 0 errors.
+- `testReleaseUnitTest`: 44 tests, 0 failures, 0 errors.
 - Android lint: no issues found, with warnings treated as errors.
 - Debug APK assembly: successful.
 - Debug instrumentation APK assembly: successful (6 device tests compiled).
@@ -38,6 +38,10 @@ species-level 100% size baseline.
 The Hoots timing follow-up verifies the shared 10-second reading/writing
 activity length, 0.15-second reading frames, zero-based writing frame 2 as the
 0.25-second coffee hold, and exact quarter-second frame-boundary advancement.
+The current follow-up verifies animated right, left, upward, and downward drag
+poses for both species, including physics-locked Hoots. Bubble appearance now
+normalizes independent border, fill, and text colours and opacities, resolves
+dark/light/system modes, and retains separate editable dark and light presets.
 
 The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 192 x 208 cell grid as Seedy. Imported sheet SHA-256:
@@ -48,11 +52,11 @@ The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 
 ## Artifact
 
-The root output directory contains `PetBlud-0.7.2-debug.apk`.
+The verified working-tree artifact is `app/build/outputs/apk/debug/app-debug.apk`.
 
 ```text
-Size: 11,864,742 bytes
-SHA-256: 37372ef08d2abfb1e578e9510a015f971141a7e721a59ed3595e08dbcb275edc
+Size: 13,218,128 bytes
+SHA-256: ccf6ed1ebac9837a1401967c97830a83a77dbd18a773f0b7c5e95deb36fb3d2e
 ```
 
 ## Remaining device checks
@@ -74,6 +78,7 @@ Version 0.7.2 additionally needs notification-access grant/revoke checks, real
 ChatGPT post/update/removal events, in-memory caching while Hoots is absent,
 bubble following and touch pass-through, keyboard clamping, listener reconnect,
 and confirmation that every non-ChatGPT package is ignored.
-Bubble colour/independent opacity rendering, typed numeric input, reset behavior, hold-menu disabling,
-tap-to-open, touch pass-through in both interaction modes, and visual sprite
-scale consistency also remain physical-device acceptance checks.
+Bubble dark/light/system switching, independent colour/opacity rendering,
+typed numeric input, per-preset reset behavior, hold-menu disabling,
+tap-to-open, touch pass-through in both interaction modes, directional drag
+animation, and visual sprite scale consistency remain physical-device checks.

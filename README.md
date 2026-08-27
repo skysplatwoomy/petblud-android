@@ -11,7 +11,7 @@ Current build: **0.7.2**.
 - Transparent, independently touchable `TYPE_APPLICATION_OVERLAY` windows, so touches outside a pet still reach the app underneath.
 - The original 11 animation rows, frame counts, and frame rates.
 - The original gravity, bounce, throw, hard-landing, idle-emote, explosion, and collision behavior.
-- Tap to hop, drag to throw, and long-press for a service-owned popover that never switches away from the app underneath.
+- Tap to hop, drag to throw, and long-press for a service-owned popover that never switches away from the app underneath. While dragged, both pets animate toward the pointer: left/right use their directional rows (Hoots flaps his wings), while upward/downward motion uses jump/fall.
 - A dark Material dashboard with live per-species status, contextual controls, and accessible 48 dp targets.
 - A pinned `petblud` header that stays visible while the dashboard scrolls and respects status-bar, cutout, and navigation-bar insets.
 - Horizontally swipeable Seedy and Hoots pages with visible tabs, green Seedy accents, and orange Hoots accents.
@@ -19,10 +19,10 @@ Current build: **0.7.2**.
 - Optional Seedy-to-Hoots collision, off by default and available only on the Hoots page. Seedy-to-Seedy collision remains independent.
 - Hoots randomly reads, writes, or moves his wings while idle. Reading and writing each run for the same 10 seconds as Seedy's laptop activity; reading holds every frame for 0.15 seconds, and writing holds the coffee-at-mouth frame for 0.25 seconds. An optional Hoots-only physics lock keeps him draggable and collision-visible while blocking gravity, throws, taps, blasts, and collision impulses; floating Hoots still uses idle animations.
 - Optional Hoots ChatGPT status bubbles mirror the newest active notification from the official ChatGPT Android app. Notification text is sanitized, memory-only, and rendered in a separate non-touchable overlay that follows Hoots without blocking the app underneath.
-- Hoots bubble appearance uses crash-safe continuous HSV pickers. Border and fill each have their own 0–100% opacity inside the picker, text has a separate opacity control, and one tap restores every default. These controls appear only when notification reading is enabled; Hoots's hold menu can disable the bubble immediately.
+- Hoots bubble appearance uses three stacked crash-safe HSV pickers for border, fill, and text, each with its own 0–100% opacity. Independent dark and light presets are saved, while System follows and edits whichever Android theme is active. Reset restores only the active preset. These controls appear only when notification reading is enabled; Hoots's hold menu can disable the bubble immediately.
 - Optional tap-to-open makes only the bubble card interactive and launches the official ChatGPT app; it is off by default, and touches outside the card still pass through.
 - Hoots uses an 85% species baseline so 100% is visually comparable to Seedy's 100%. His wider normal idle frame receives an additional measured 90% animation scale so transitions to writing, reading, and wing animations stay consistent.
-- Every editable numeric readout can be tapped to enter an exact value, including dashboard size/physics/opacity, colour-picker HSV/opacity, and long-press-menu physics.
+- Every editable numeric readout can be tapped to enter an exact value, including dashboard size/physics, colour-picker HSV/opacity, and long-press-menu physics.
 - Optional tilt-directed gravity using Android's gravity sensor, with an accelerometer fallback.
 - Optional shake detonation under tilt gravity. Linear shake acceleration scales the existing detonation force from 1.5× to 4×, with a 700 ms cooldown.
 - Optional gravity-relative sprite rotation under tilt gravity, with enlarged overlay bounds to avoid clipping rotated Seedys.
@@ -80,7 +80,7 @@ Open PetBlud, grant **Display over other apps**, then wake Seedy or swipe to the
 
 ## Verification
 
-The JVM suite contains 42 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, Hoots idle activities and frame timing, physics locking, notification filtering/sanitization/lifecycle, bubble placement/appearance/interaction flags, sprite and baseline normalization, typed numeric parsing, and per-species sensor routing.
+The JVM suite contains 44 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, four-way drag animation for both species, Hoots idle activities and frame timing, physics locking, notification filtering/sanitization/lifecycle, bubble placement/theme resolution/appearance/interaction flags, sprite and baseline normalization, typed numeric parsing, and per-species sensor routing.
 
 An instrumentation APK compiles six device tests for controls/accessibility, pinned-header hierarchy, pager order, Seedy/Hoots theming, Hoots-only appearance controls and hold-menu toggle, crash-free colour-picker opening, and the protected notification-listener declaration/access intent. Those tests require a device or emulator to execute.
 

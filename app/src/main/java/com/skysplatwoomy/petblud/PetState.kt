@@ -48,6 +48,8 @@ class PetState internal constructor(
     var dragDy: Double = 0.0
     var pressRootX: Double = 0.0
     var pressRootY: Double = 0.0
+    var dragVx: Double = 0.0
+    var dragVy: Double = 0.0
     val dragSamples: MutableList<DragSample> = mutableListOf()
 
     var animation: PetAnimation? = PetAnimation.IDLE

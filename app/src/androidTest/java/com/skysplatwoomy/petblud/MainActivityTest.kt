@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.os.Build
 import android.provider.Settings
 import android.view.View
+import android.view.ViewGroup
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
@@ -14,6 +15,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -92,7 +94,28 @@ class MainActivityTest {
                     if (notificationSwitch.isChecked) View.VISIBLE else View.GONE,
                     hootsDashboard.findViewById<View>(R.id.bubbleAppearanceControls).visibility,
                 )
-                assertTrue(hootsDashboard.findViewById<View>(R.id.bubbleTextOpacityValue).isClickable)
+                assertTrue(hootsDashboard.findViewById<View>(R.id.bubbleTextColorButton).isClickable)
+                val appearanceControls =
+                    hootsDashboard.findViewById<ViewGroup>(R.id.bubbleAppearanceControls)
+                val borderButton = hootsDashboard.findViewById<View>(R.id.bubbleBorderColorButton)
+                val fillButton = hootsDashboard.findViewById<View>(R.id.bubbleFillColorButton)
+                val textButton = hootsDashboard.findViewById<View>(R.id.bubbleTextColorButton)
+                val modeGroup = hootsDashboard.findViewById<MaterialButtonToggleGroup>(
+                    R.id.bubbleColorModeGroup,
+                )
+                assertTrue(
+                    appearanceControls.indexOfChild(borderButton) <
+                        appearanceControls.indexOfChild(fillButton),
+                )
+                assertTrue(
+                    appearanceControls.indexOfChild(fillButton) <
+                        appearanceControls.indexOfChild(textButton),
+                )
+                assertTrue(
+                    appearanceControls.indexOfChild(textButton) <
+                        appearanceControls.indexOfChild(modeGroup),
+                )
+                assertTrue(modeGroup.checkedButtonId != View.NO_ID)
                 assertEquals("Hoots", hootsDashboard.findViewById<View>(R.id.heroPet).contentDescription)
                 assertEquals(
                     activity.getColor(R.color.hoots_orange),

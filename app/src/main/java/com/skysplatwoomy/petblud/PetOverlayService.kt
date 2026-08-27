@@ -800,11 +800,11 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         val window = bubbleWindow ?: createBubbleWindow()
         window.view.showStatus(status)
         window.view.applyAppearance(
-            border = currentSettings.hoots.bubbleBorderColor,
-            borderOpacity = currentSettings.hoots.bubbleBorderOpacityPercent,
-            fill = currentSettings.hoots.bubbleFillColor,
-            fillOpacity = currentSettings.hoots.bubbleFillOpacityPercent,
-            textOpacity = currentSettings.hoots.bubbleTextOpacityPercent,
+            currentSettings.hoots.bubbleAppearance(
+                systemIsDark = resources.configuration.uiMode and
+                    android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+                    android.content.res.Configuration.UI_MODE_NIGHT_YES,
+            ),
         )
         val interactive = currentSettings.hoots.bubbleTapOpensChatGpt
         window.view.isClickable = interactive

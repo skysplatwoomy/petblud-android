@@ -252,63 +252,70 @@
                         android:textAppearance="@style/TextAppearance.PetBlud.Body"
                         android:textStyle="bold" />
 
-                    <LinearLayout
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bubbleBorderColorButton"
+                        style="@style/Widget.PetBlud.Button.Outlined"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        android:text="@string/bubble_border" />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/bubbleBorderColorButton"
-                            style="@style/Widget.PetBlud.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:text="@string/bubble_border" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/bubbleFillColorButton"
-                            style="@style/Widget.PetBlud.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="4dp"
-                            android:layout_weight="1"
-                            android:text="@string/bubble_fill" />
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bubbleFillColorButton"
+                        style="@style/Widget.PetBlud.Button.Outlined"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="8dp"
+                        android:text="@string/bubble_fill" />
 
-                        <TextView
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bubbleTextColorButton"
+                        style="@style/Widget.PetBlud.Button.Outlined"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/bubble_text" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/bubble_colour_preset"
+                        android:textAppearance="@style/TextAppearance.PetBlud.Support" />
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/bubbleColorModeGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        app:checkedButton="@id/bubbleLightModeButton"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/bubbleDarkModeButton"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/bubble_text_opacity"
-                            android:textAppearance="@style/TextAppearance.PetBlud.Body" />
+                            android:text="@string/dark" />
 
-                        <TextView
-                            android:id="@+id/bubbleTextOpacityValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="48dp"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center"
-                            android:minWidth="48dp"
-                            android:textAppearance="@style/TextAppearance.PetBlud.Support" />
-                    </LinearLayout>
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/bubbleLightModeButton"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/light" />
 
-                    <com.google.android.material.slider.Slider
-                        android:id="@+id/bubbleTextOpacitySlider"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/bubble_text_opacity"
-                        android:stepSize="1"
-                        android:valueFrom="0"
-                        android:valueTo="100" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/bubbleSystemModeButton"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/system" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/bubbleTapOpensChatGptSwitch"
