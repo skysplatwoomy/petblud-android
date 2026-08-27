@@ -19,6 +19,7 @@ import kotlin.math.sin
 class PetOverlayView(
     context: Context,
     private val petId: Long,
+    private val species: PetSpecies,
     private val spriteSheet: Bitmap?,
     private val idleBitmap: Bitmap,
     private val listener: Listener,
@@ -121,9 +122,12 @@ class PetOverlayView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val left = (width - spriteWidthPx) / 2
-        val top = (height - spriteHeightPx) / 2
-        destination.set(left, top, left + spriteWidthPx, top + spriteHeightPx)
+        val visualScale = SpriteVisualScale.forAnimation(species, animation)
+        val renderWidth = (spriteWidthPx * visualScale).toInt().coerceAtLeast(1)
+        val renderHeight = (spriteHeightPx * visualScale).toInt().coerceAtLeast(1)
+        val left = (width - renderWidth) / 2
+        val top = (height - renderHeight) / 2
+        destination.set(left, top, left + renderWidth, top + renderHeight)
         canvas.withRotation(rotationDegrees, width / 2f, height / 2f) {
             val sheet = spriteSheet
             if (

@@ -22,6 +22,7 @@ data class PetSnapshot(
     val gravityEnabled: Boolean,
     val physicsMultiplier: Double,
     val sizePercent: Double,
+    val showChatGptNotifications: Boolean,
 )
 
 class PetState internal constructor(
@@ -65,12 +66,13 @@ class PetState internal constructor(
     val height: Double
         get() = BASE_HEIGHT * sizePercent / 100.0
 
-    fun snapshot(): PetSnapshot = PetSnapshot(
+    fun snapshot(showChatGptNotifications: Boolean = false): PetSnapshot = PetSnapshot(
         id = id,
         species = species,
         gravityEnabled = gravityEnabled,
         physicsMultiplier = physicsMultiplier,
         sizePercent = sizePercent,
+        showChatGptNotifications = showChatGptNotifications,
     )
 
     companion object {

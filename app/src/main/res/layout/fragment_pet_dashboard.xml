@@ -202,6 +202,139 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/chatGptNotificationsCard"
+            style="@style/Widget.PetBlud.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/chatgpt_status"
+                    android:textAppearance="@style/TextAppearance.PetBlud.Section" />
+
+                <TextView
+                    android:id="@+id/chatGptNotificationsSupport"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/chatgpt_notifications_privacy"
+                    android:textAppearance="@style/TextAppearance.PetBlud.Support" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/chatGptNotificationsSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/show_chatgpt_notifications"
+                    android:minHeight="52dp"
+                    android:text="@string/show_chatgpt_notifications" />
+
+                <LinearLayout
+                    android:id="@+id/bubbleAppearanceControls"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/bubble_appearance"
+                        android:textAppearance="@style/TextAppearance.PetBlud.Body"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/bubbleBorderColorButton"
+                            style="@style/Widget.PetBlud.Button.Outlined"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:text="@string/bubble_border" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/bubbleFillColorButton"
+                            style="@style/Widget.PetBlud.Button.Outlined"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:text="@string/bubble_fill" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/bubble_opacity"
+                            android:textAppearance="@style/TextAppearance.PetBlud.Body" />
+
+                        <TextView
+                            android:id="@+id/bubbleOpacityValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="@style/TextAppearance.PetBlud.Support" />
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/bubbleOpacitySlider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/bubble_opacity"
+                        android:stepSize="1"
+                        android:valueFrom="20"
+                        android:valueTo="100" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/bubbleTapOpensChatGptSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="52dp"
+                        android:text="@string/tap_bubble_opens_chatgpt" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/resetBubbleAppearanceButton"
+                        style="@style/Widget.PetBlud.Button.Outlined"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reset_bubble_appearance" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/grantNotificationAccessButton"
+                    style="@style/Widget.PetBlud.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/grant_notification_access_description"
+                    android:text="@string/grant_notification_access"
+                    app:icon="@drawable/ic_shield"
+                    app:iconGravity="textStart"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             style="@style/Widget.PetBlud.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -239,6 +372,14 @@
                     android:layout_height="wrap_content"
                     android:minHeight="52dp"
                     android:text="@string/seedy_hoots_collisions"
+                    android:visibility="gone" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/disablePhysicsInteractionsSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="52dp"
+                    android:text="@string/disable_physics_interactions"
                     android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

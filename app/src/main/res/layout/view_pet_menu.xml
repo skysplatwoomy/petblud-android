@@ -89,6 +89,14 @@
                 android:minHeight="52dp"
                 android:text="@string/gravity_for_seedy" />
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/menuChatGptBubble"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="52dp"
+                android:text="@string/show_hoots_chatgpt_bubble"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

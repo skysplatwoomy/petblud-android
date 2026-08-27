@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +32,8 @@ class SettingsRepository(context: Context) {
                 physicsMultiplier = preferences[PHYSICS_MULTIPLIER] ?: 1.0,
                 sizePercent = preferences[SIZE_PERCENT] ?: 100.0,
                 collision = preferences[COLLISION] ?: false,
+                disablePhysicsInteractions = false,
+                showChatGptNotifications = false,
             ).normalized()
             val hoots = PetSettings(
                 gravity = preferences[HOOTS_GRAVITY] ?: true,
@@ -41,6 +44,15 @@ class SettingsRepository(context: Context) {
                 physicsMultiplier = preferences[HOOTS_PHYSICS_MULTIPLIER] ?: 1.0,
                 sizePercent = preferences[HOOTS_SIZE_PERCENT] ?: 100.0,
                 collision = false,
+                disablePhysicsInteractions = preferences[HOOTS_DISABLE_PHYSICS_INTERACTIONS] ?: false,
+                showChatGptNotifications = preferences[HOOTS_SHOW_CHATGPT_NOTIFICATIONS] ?: false,
+                bubbleBorderColor = preferences[HOOTS_BUBBLE_BORDER_COLOR]
+                    ?: PetSettings.DEFAULT_BUBBLE_BORDER_COLOR,
+                bubbleFillColor = preferences[HOOTS_BUBBLE_FILL_COLOR]
+                    ?: PetSettings.DEFAULT_BUBBLE_FILL_COLOR,
+                bubbleOpacityPercent = preferences[HOOTS_BUBBLE_OPACITY_PERCENT]
+                    ?: PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT,
+                bubbleTapOpensChatGpt = preferences[HOOTS_BUBBLE_TAP_OPENS_CHATGPT] ?: false,
             ).normalized()
             AppSettings(
                 seedy = seedy,
@@ -77,6 +89,12 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    suspend fun setHootsChatGptNotifications(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[HOOTS_SHOW_CHATGPT_NOTIFICATIONS] = enabled
+        }
+    }
+
     private fun writeSeedy(
         preferences: androidx.datastore.preferences.core.MutablePreferences,
         value: PetSettings,
@@ -102,6 +120,12 @@ class SettingsRepository(context: Context) {
         preferences[HOOTS_AVOID_KEYBOARD] = value.avoidKeyboard
         preferences[HOOTS_PHYSICS_MULTIPLIER] = value.physicsMultiplier
         preferences[HOOTS_SIZE_PERCENT] = value.sizePercent
+        preferences[HOOTS_DISABLE_PHYSICS_INTERACTIONS] = value.disablePhysicsInteractions
+        preferences[HOOTS_SHOW_CHATGPT_NOTIFICATIONS] = value.showChatGptNotifications
+        preferences[HOOTS_BUBBLE_BORDER_COLOR] = value.bubbleBorderColor
+        preferences[HOOTS_BUBBLE_FILL_COLOR] = value.bubbleFillColor
+        preferences[HOOTS_BUBBLE_OPACITY_PERCENT] = value.bubbleOpacityPercent
+        preferences[HOOTS_BUBBLE_TAP_OPENS_CHATGPT] = value.bubbleTapOpensChatGpt
     }
 
     companion object {
@@ -120,6 +144,16 @@ class SettingsRepository(context: Context) {
         private val HOOTS_AVOID_KEYBOARD = booleanPreferencesKey("hoots_avoid_keyboard")
         private val HOOTS_PHYSICS_MULTIPLIER = doublePreferencesKey("hoots_physics_multiplier")
         private val HOOTS_SIZE_PERCENT = doublePreferencesKey("hoots_size_percent")
+        private val HOOTS_DISABLE_PHYSICS_INTERACTIONS =
+            booleanPreferencesKey("hoots_disable_physics_interactions")
+        private val HOOTS_SHOW_CHATGPT_NOTIFICATIONS =
+            booleanPreferencesKey("hoots_show_chatgpt_notifications")
+        private val HOOTS_BUBBLE_BORDER_COLOR = intPreferencesKey("hoots_bubble_border_color")
+        private val HOOTS_BUBBLE_FILL_COLOR = intPreferencesKey("hoots_bubble_fill_color")
+        private val HOOTS_BUBBLE_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_opacity_percent")
+        private val HOOTS_BUBBLE_TAP_OPENS_CHATGPT =
+            booleanPreferencesKey("hoots_bubble_tap_opens_chatgpt")
         private val SEEDY_HOOTS_COLLISION = booleanPreferencesKey("seedy_hoots_collision")
     }
 }

@@ -62,6 +62,7 @@ class PetManager(
                     settings = settings,
                     specialTimer = random.nextDouble(4.5, 5.5),
                 )
+                if (physicsInteractionsDisabled(pet)) pet.vx = 0.0
                 mutablePets += pet
                 add(pet)
             }
@@ -89,7 +90,12 @@ class PetManager(
         mutablePets.removeAll { it.species == survivor.species && it.id != id }
     }
 
-    fun snapshot(id: Long): PetSnapshot? = find(id)?.snapshot()
+    fun snapshot(id: Long): PetSnapshot? = find(id)?.let { pet ->
+        pet.snapshot(
+            showChatGptNotifications = pet.species == PetSpecies.HOOTS &&
+                appSettings.hoots.showChatGptNotifications,
+        )
+    }
 
     fun applySettings(value: PetSettings) {
         applySettings(appSettings.copy(seedy = value))
@@ -105,6 +111,10 @@ class PetManager(
             pet.gravityEnabled = settings.gravity
             pet.physicsMultiplier = settings.physicsMultiplier
             pet.sizePercent = settings.sizePercent
+            if (physicsInteractionsDisabled(pet)) {
+                stopPhysicsMotion(pet)
+                setAnimation(pet, PetAnimation.IDLE, loop = true, restart = true)
+            }
             clampPosition(pet)
         }
     }
@@ -180,8 +190,13 @@ class PetManager(
 
         recordDragSample(pet, rawX, rawY, timeSeconds)
         val velocity = velocityFromSamples(pet.dragSamples)
-        pet.vx = velocity.first
-        pet.vy = velocity.second
+        if (physicsInteractionsDisabled(pet)) {
+            pet.vx = 0.0
+            pet.vy = 0.0
+        } else {
+            pet.vx = velocity.first
+            pet.vy = velocity.second
+        }
         if (abs(pet.vx) > 1.0) pet.facing = if (pet.vx > 0.0) 1 else -1
         val bounds = boundsFor(pet.species)
         pet.x = (rawX - pet.dragDx).coerceIn(0.0, (bounds.width - pet.width).coerceAtLeast(0.0))
@@ -198,7 +213,10 @@ class PetManager(
         val pet = find(id) ?: return
         if (!pet.dragging) return
 
-        if (!pet.didDrag) {
+        if (physicsInteractionsDisabled(pet)) {
+            stopPhysicsMotion(pet)
+            setAnimation(pet, PetAnimation.IDLE, loop = true, restart = true)
+        } else if (!pet.didDrag) {
             hop(pet, localX)
         } else {
             recordDragSample(pet, rawX, rawY, timeSeconds)
@@ -222,11 +240,17 @@ class PetManager(
             dragSamples.clear()
             dragging = false
             didDrag = false
+            if (physicsInteractionsDisabled(this)) {
+                stopPhysicsMotion(this)
+                setAnimation(this, PetAnimation.IDLE, loop = true, restart = true)
+            }
         }
     }
 
     fun explode(originX: Double, originY: Double, species: PetSpecies = PetSpecies.SEEDY) {
-        mutablePets.filter { it.species == species }.forEach { pet ->
+        mutablePets.filter {
+            it.species == species && !physicsInteractionsDisabled(it)
+        }.forEach { pet ->
             val centerX = pet.x + pet.width / 2.0
             val centerY = pet.y + pet.height / 2.0
             var dx = centerX - originX
@@ -252,7 +276,9 @@ class PetManager(
         species: PetSpecies = PetSpecies.SEEDY,
     ) {
         val multiplier = strengthMultiplier.coerceIn(1.0, MAX_DETONATION_MULTIPLIER)
-        mutablePets.filter { it.species == species }.forEach { pet ->
+        mutablePets.filter {
+            it.species == species && !physicsInteractionsDisabled(it)
+        }.forEach { pet ->
             val angle = random.nextDouble(0.0, TAU)
             val strength = random.nextDouble(750.0, 1150.0) * multiplier
             pet.vx += cos(angle) * strength
@@ -276,8 +302,12 @@ class PetManager(
         val maxX = (bounds.width - pet.width).coerceAtLeast(0.0)
         val maxY = (bounds.height - pet.height).coerceAtLeast(0.0)
         var impactSpeed = 0.0
+        val physicsDisabled = physicsInteractionsDisabled(pet)
 
-        if (!(pet.dragging && pet.didDrag)) {
+        if (physicsDisabled) {
+            pet.vx = 0.0
+            pet.vy = 0.0
+        } else if (!(pet.dragging && pet.didDrag)) {
             val modifier = pet.physicsMultiplier
             if (pet.gravityEnabled) {
                 pet.vx += gravityX * GRAVITY * modifier * dt
@@ -343,7 +373,7 @@ class PetManager(
             pet.pendingOneShot = PetAnimation.SPIN
         }
 
-        val onGravitySurface = isOnGravitySurface(pet, maxX, maxY)
+        val onGravitySurface = physicsDisabled || isOnGravitySurface(pet, maxX, maxY)
         val activelyDragging = pet.dragging && pet.didDrag
         maybeIdleSpecial(pet, dt, onGravitySurface && !activelyDragging)
         pickAnimation(pet, onGravitySurface, impactSpeed)
@@ -406,11 +436,16 @@ class PetManager(
         pet.specialTimer -= dt
         if (pet.specialTimer > 0.0) return
         pet.specialTimer = random.nextDouble(4.5, 5.5)
-        val animation = when (random.nextInt(100)) {
-            in 0..29 -> PetAnimation.WAVE
-            in 30..59 -> PetAnimation.EAT
-            in 60..69 -> PetAnimation.CODE
-            else -> PetAnimation.CHEER
+        val choices = idleAnimationsFor(pet.species)
+        val animation = if (pet.species == PetSpecies.HOOTS) {
+            choices[random.nextInt(choices.size)]
+        } else {
+            when (random.nextInt(100)) {
+                in 0..29 -> PetAnimation.WAVE
+                in 30..59 -> PetAnimation.EAT
+                in 60..69 -> PetAnimation.CODE
+                else -> PetAnimation.CHEER
+            }
         }
         startOneShot(pet, animation)
     }
@@ -584,19 +619,29 @@ class PetManager(
         val overlapY = (ownHeight + otherHeight) / 2.0 - abs(dy)
         if (overlapX <= 0.0 || overlapY <= 0.0) return
 
+        val ownFixed = physicsInteractionsDisabled(own)
+        val otherFixed = physicsInteractionsDisabled(other)
+        if (ownFixed && otherFixed) return
+        val ownShare = if (ownFixed) 0.0 else if (otherFixed) 1.0 else 0.5
+        val otherShare = if (otherFixed) 0.0 else if (ownFixed) 1.0 else 0.5
+        val ownImpulse = if (ownFixed) 0.0 else if (otherFixed) 240.0 else 120.0
+        val otherImpulse = if (otherFixed) 0.0 else if (ownFixed) 240.0 else 120.0
+
         if (overlapX < overlapY) {
             val direction = if (dx >= 0.0) 1.0 else -1.0
-            own.x += direction * overlapX * 0.5
-            other.x -= direction * overlapX * 0.5
-            own.vx += direction * 120.0
-            other.vx -= direction * 120.0
+            own.x += direction * overlapX * ownShare
+            other.x -= direction * overlapX * otherShare
+            own.vx += direction * ownImpulse
+            other.vx -= direction * otherImpulse
         } else {
             val direction = if (dy >= 0.0) 1.0 else -1.0
-            own.y += direction * overlapY * 0.5
-            other.y -= direction * overlapY * 0.5
-            own.vy += direction * 120.0
-            other.vy -= direction * 120.0
+            own.y += direction * overlapY * ownShare
+            other.y -= direction * overlapY * otherShare
+            own.vy += direction * ownImpulse
+            other.vy -= direction * otherImpulse
         }
+        if (ownFixed) stopPhysicsMotion(own)
+        if (otherFixed) stopPhysicsMotion(other)
     }
 
     private fun clampPosition(pet: PetState) {
@@ -606,6 +651,30 @@ class PetManager(
     }
 
     private fun find(id: Long): PetState? = mutablePets.firstOrNull { it.id == id }
+
+    private fun physicsInteractionsDisabled(pet: PetState): Boolean =
+        pet.species == PetSpecies.HOOTS && appSettings.hoots.disablePhysicsInteractions
+
+    private fun stopPhysicsMotion(pet: PetState) {
+        pet.vx = 0.0
+        pet.vy = 0.0
+        pet.cheerOnLand = false
+        pet.pendingOneShot = null
+    }
+
+    internal fun idleAnimationsFor(species: PetSpecies): List<PetAnimation> = when (species) {
+        PetSpecies.SEEDY -> listOf(
+            PetAnimation.WAVE,
+            PetAnimation.EAT,
+            PetAnimation.CODE,
+            PetAnimation.CHEER,
+        )
+        PetSpecies.HOOTS -> listOf(
+            PetAnimation.EAT,
+            PetAnimation.CODE,
+            PetAnimation.CHEER,
+        )
+    }
 
     fun speciesOf(id: Long): PetSpecies? = find(id)?.species
 

@@ -74,6 +74,17 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         val params: WindowManager.LayoutParams,
     )
 
+    private data class BubbleWindow(
+        val view: HootsStatusBubbleView,
+        val params: WindowManager.LayoutParams,
+        var status: ChatGptNotificationStatus? = null,
+        var x: Int = Int.MIN_VALUE,
+        var y: Int = Int.MIN_VALUE,
+        var width: Int = -1,
+        var height: Int = -1,
+        var interactive: Boolean = false,
+    )
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var windowManager: WindowManager
     private lateinit var settingsRepository: SettingsRepository
@@ -87,6 +98,8 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
     private val spriteSheets = mutableMapOf<PetSpecies, Bitmap?>()
     private val windows = mutableMapOf<Long, PetWindow>()
     private var menuWindow: MenuWindow? = null
+    private var bubbleWindow: BubbleWindow? = null
+    private var activeChatGptStatus: ChatGptNotificationStatus? = null
     private var currentSettings = AppSettings()
     private var gravitySensor: Sensor? = null
     private var accelerometerSensor: Sensor? = null
@@ -124,7 +137,8 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> {
                     screenPaused = true
-                    dismissPetMenu()
+                    dismissPetMenu(restoreBubble = false)
+                    dismissHootsBubble()
                     unregisterMotionSensors()
                     stopFrameLoop()
                 }
@@ -132,6 +146,7 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
                 Intent.ACTION_SCREEN_ON -> {
                     screenPaused = false
                     configureMotionSensor()
+                    syncHootsBubble()
                     postFrame()
                 }
             }
@@ -171,6 +186,12 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
                     )
                 }
                 syncWindows()
+            }
+        }
+        serviceScope.launch {
+            ChatGptNotificationBridge.notifications.current.collectLatest { status ->
+                activeChatGptStatus = status
+                syncHootsBubble()
             }
         }
     }
@@ -242,7 +263,8 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
     override fun onDestroy() {
         stopFrameLoop()
         unregisterMotionSensors()
-        dismissPetMenu()
+        dismissPetMenu(restoreBubble = false)
+        dismissHootsBubble()
         removeAllWindows()
         runCatching { unregisterReceiver(screenReceiver) }
         serviceScope.cancel()
@@ -366,7 +388,7 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         }
 
         val activeIds = manager.pets.mapTo(mutableSetOf()) { it.id }
-        if (menuWindow?.petId !in activeIds) dismissPetMenu()
+        if (menuWindow?.petId !in activeIds) dismissPetMenu(restoreBubble = false)
         windows.keys.filterNot(activeIds::contains).forEach(::removeWindow)
 
         manager.pets.forEach { pet ->
@@ -412,12 +434,14 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
                 spriteHeightPx = spriteHeight,
             )
         }
+        syncHootsBubble()
     }
 
     private fun addWindow(pet: PetState): PetWindow {
         val view = PetOverlayView(
             context = this,
             petId = pet.id,
+            species = pet.species,
             spriteSheet = spriteSheets[pet.species],
             idleBitmap = idleBitmaps.getValue(pet.species),
             listener = this,
@@ -452,7 +476,7 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
 
     private fun showPetMenu(petId: Long, anchorX: Int, anchorY: Int) {
         val snapshot = manager.snapshot(petId) ?: return
-        dismissPetMenu()
+        dismissPetMenu(restoreBubble = false)
         val species = snapshot.species
         val petGeometry = geometryFor(species)
         val originWorldX = screenToWorldX(anchorX.toFloat(), petGeometry)
@@ -493,6 +517,14 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
 
             override fun onPhysicsChanged(multiplier: Double) {
                 manager.setPetPhysicsMultiplier(petId, multiplier)
+            }
+
+            override fun onChatGptBubbleChanged(enabled: Boolean) {
+                if (species != PetSpecies.HOOTS) return
+                if (!enabled) dismissHootsBubble()
+                serviceScope.launch {
+                    settingsRepository.setHootsChatGptNotifications(enabled)
+                }
             }
 
             override fun onOpenSettings() {
@@ -548,6 +580,7 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         positionPetMenu(window)
         runCatching { windowManager.addView(view, params) }
             .onFailure { menuWindow = null }
+        if (species == PetSpecies.HOOTS) dismissHootsBubble()
     }
 
     private fun positionPetMenu(window: MenuWindow) {
@@ -589,10 +622,11 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         runCatching { windowManager.updateViewLayout(window.view, window.params) }
     }
 
-    private fun dismissPetMenu() {
+    private fun dismissPetMenu(restoreBubble: Boolean = true) {
         val window = menuWindow ?: return
         menuWindow = null
         runCatching { windowManager.removeViewImmediate(window.view) }
+        if (restoreBubble) syncHootsBubble()
     }
 
     private fun finishAction() {
@@ -604,7 +638,8 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
 
     private fun stopEverything() {
         manager.killAll()
-        dismissPetMenu()
+        dismissPetMenu(restoreBubble = false)
+        dismissHootsBubble()
         removeAllWindows()
         stopFrameLoop()
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -661,7 +696,10 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
 
     private fun refreshKeyboardGeometry(frameTimeNanos: Long) {
         if (
-            (PetSpecies.entries.none { currentSettings.forSpecies(it).avoidKeyboard } && menuWindow == null) ||
+            (
+                PetSpecies.entries.none { currentSettings.forSpecies(it).avoidKeyboard } &&
+                    menuWindow == null && bubbleWindow == null
+            ) ||
             Build.VERSION.SDK_INT < Build.VERSION_CODES.R
         ) return
         if (frameTimeNanos - lastGeometryCheckNanos < GEOMETRY_CHECK_INTERVAL_NANOS) return
@@ -673,6 +711,7 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
             )
         }
         if (menuWindow != null) repositionPetMenu()
+        if (bubbleWindow != null) syncHootsBubble()
     }
 
     private fun updateGeometry(updated: ScreenGeometry, species: PetSpecies) {
@@ -731,6 +770,119 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         (screenY - geometry.topPx) / geometry.density.toDouble()
 
     private fun dp(value: Int): Int = (value * geometry.density).roundToInt()
+
+    private fun syncHootsBubble() {
+        val status = activeChatGptStatus
+        val hoots = manager.pets.firstOrNull { it.species == PetSpecies.HOOTS }
+        val petWindow = hoots?.let { windows[it.id] }
+        val hootsMenuOpen = menuWindow?.petId?.let(manager::speciesOf) == PetSpecies.HOOTS
+        if (
+            status == null || hoots == null || petWindow == null || screenPaused || hootsMenuOpen ||
+            !currentSettings.hoots.showChatGptNotifications || !Settings.canDrawOverlays(this)
+        ) {
+            dismissHootsBubble()
+            return
+        }
+
+        val boundsGeometry = readGeometry(avoidKeyboard = true)
+        val margin = dp(BUBBLE_MARGIN_DP)
+        val bounds = PixelBounds(
+            left = boundsGeometry.leftPx + margin,
+            top = boundsGeometry.topPx + margin,
+            right = boundsGeometry.leftPx + boundsGeometry.widthPx - margin,
+            bottom = boundsGeometry.topPx + boundsGeometry.heightPx - margin,
+        )
+        val maxWidth = minOf(
+            dp(BUBBLE_MAX_WIDTH_DP),
+            (bounds.right - bounds.left).coerceAtLeast(1),
+        )
+        val minWidth = minOf(dp(BUBBLE_MIN_WIDTH_DP), maxWidth)
+        val window = bubbleWindow ?: createBubbleWindow()
+        window.view.showStatus(status)
+        window.view.applyAppearance(
+            border = currentSettings.hoots.bubbleBorderColor,
+            fill = currentSettings.hoots.bubbleFillColor,
+            opacity = currentSettings.hoots.bubbleOpacityPercent,
+        )
+        val interactive = currentSettings.hoots.bubbleTapOpensChatGpt
+        window.view.isClickable = interactive
+        window.params.flags = HootsBubbleInteraction.windowFlags(interactive)
+        window.view.measure(
+            View.MeasureSpec.makeMeasureSpec(maxWidth, View.MeasureSpec.AT_MOST),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        val width = window.view.measuredWidth.coerceIn(minWidth, maxWidth)
+        window.view.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        val height = window.view.measuredHeight.coerceAtLeast(1)
+        val placement = HootsBubblePlacement.place(
+            pet = PixelRect(
+                left = petWindow.x,
+                top = petWindow.y,
+                right = petWindow.x + petWindow.width,
+                bottom = petWindow.y + petWindow.height,
+            ),
+            bubbleWidth = width,
+            bubbleHeight = height,
+            bounds = bounds,
+            gap = dp(BUBBLE_GAP_DP),
+            tailInset = dp(BUBBLE_TAIL_INSET_DP),
+        )
+        window.view.setTail(placement.tailAtTop, placement.tailCenterX)
+        window.params.x = placement.x
+        window.params.y = placement.y
+        window.params.width = width
+        window.params.height = height
+        val changed =
+            window.status != status || window.x != placement.x || window.y != placement.y ||
+                window.width != width || window.height != height || window.interactive != interactive
+        window.status = status
+        window.x = placement.x
+        window.y = placement.y
+        window.width = width
+        window.height = height
+        window.interactive = interactive
+        if (bubbleWindow == null) {
+            bubbleWindow = window
+            runCatching { windowManager.addView(window.view, window.params) }
+                .onFailure { bubbleWindow = null }
+        } else if (changed) {
+            runCatching { windowManager.updateViewLayout(window.view, window.params) }
+        }
+    }
+
+    private fun createBubbleWindow(): BubbleWindow {
+        val view = HootsStatusBubbleView(this).apply {
+            setOnClickListener { openChatGpt() }
+        }
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            HootsBubbleInteraction.windowFlags(interactive = false),
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            title = "PetBlud Hoots ChatGPT status"
+        }
+        return BubbleWindow(view = view, params = params)
+    }
+
+    private fun openChatGpt() {
+        val launchIntent = packageManager.getLaunchIntentForPackage(
+            ChatGptNotificationParser.CHATGPT_PACKAGE,
+        ) ?: return
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(launchIntent) }
+    }
+
+    private fun dismissHootsBubble() {
+        val window = bubbleWindow ?: return
+        bubbleWindow = null
+        runCatching { windowManager.removeViewImmediate(window.view) }
+    }
 
     private fun decodeBitmap(resourceId: Int): Bitmap =
         BitmapFactory.decodeResource(resources, resourceId)
@@ -829,6 +981,11 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         private const val MENU_MAX_WIDTH_DP = 320
         private const val MENU_MARGIN_DP = 12
         private const val MENU_GAP_DP = 10
+        private const val BUBBLE_MAX_WIDTH_DP = 280
+        private const val BUBBLE_MIN_WIDTH_DP = 160
+        private const val BUBBLE_MARGIN_DP = 8
+        private const val BUBBLE_GAP_DP = 5
+        private const val BUBBLE_TAIL_INSET_DP = 24
 
         @Volatile
         private var liveService: WeakReference<PetOverlayService>? = null

@@ -9,10 +9,22 @@ data class PetSettings(
     val physicsMultiplier: Double = 1.0,
     val sizePercent: Double = 100.0,
     val collision: Boolean = false,
+    val disablePhysicsInteractions: Boolean = false,
+    val showChatGptNotifications: Boolean = false,
+    val bubbleBorderColor: Int = DEFAULT_BUBBLE_BORDER_COLOR,
+    val bubbleFillColor: Int = DEFAULT_BUBBLE_FILL_COLOR,
+    val bubbleOpacityPercent: Double = DEFAULT_BUBBLE_OPACITY_PERCENT,
+    val bubbleTapOpensChatGpt: Boolean = false,
 ) {
     fun normalized(): PetSettings = copy(
         physicsMultiplier = physicsMultiplier.coerceIn(MIN_PHYSICS_MULTIPLIER, MAX_PHYSICS_MULTIPLIER),
         sizePercent = sizePercent.coerceIn(MIN_SIZE_PERCENT, MAX_SIZE_PERCENT),
+        bubbleBorderColor = opaqueColor(bubbleBorderColor),
+        bubbleFillColor = opaqueColor(bubbleFillColor),
+        bubbleOpacityPercent = bubbleOpacityPercent.coerceIn(
+            MIN_BUBBLE_OPACITY_PERCENT,
+            MAX_BUBBLE_OPACITY_PERCENT,
+        ),
     )
 
     companion object {
@@ -20,6 +32,13 @@ data class PetSettings(
         const val MAX_PHYSICS_MULTIPLIER = 5.0
         const val MIN_SIZE_PERCENT = 10.0
         const val MAX_SIZE_PERCENT = 500.0
+        const val DEFAULT_BUBBLE_BORDER_COLOR: Int = -681411
+        const val DEFAULT_BUBBLE_FILL_COLOR: Int = -3385
+        const val DEFAULT_BUBBLE_OPACITY_PERCENT = 100.0
+        const val MIN_BUBBLE_OPACITY_PERCENT = 20.0
+        const val MAX_BUBBLE_OPACITY_PERCENT = 100.0
+
+        private fun opaqueColor(color: Int): Int = color or (0xFF shl 24)
     }
 }
 

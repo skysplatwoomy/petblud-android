@@ -104,6 +104,14 @@ class MainActivity : AppCompatActivity(), PetDashboardFragment.Host {
         )
     }
 
+    override fun openNotificationListenerAccess() {
+        val preferred = NotificationListenerAccess.settingsIntent(this)
+        runCatching { startActivity(preferred) }
+            .recoverCatching {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            }
+    }
+
     override fun showSaving() {
         saveStatus.setText(R.string.saving)
         saveStatus.setTextColor(ContextCompat.getColor(this, R.color.pet_warning))

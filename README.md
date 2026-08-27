@@ -2,7 +2,7 @@
 
 Native Kotlin port of [skysplatwoomy/petblud](https://github.com/skysplatwoomy/petblud), implemented as a user-enabled system-wide Android overlay.
 
-Current build: **0.5.0**.
+Current build: **0.6.1**.
 
 ## What is implemented
 
@@ -17,6 +17,11 @@ Current build: **0.5.0**.
 - Horizontally swipeable Seedy and Hoots pages with visible tabs, green Seedy accents, and orange Hoots accents.
 - Fully separate gravity, motion, keyboard avoidance, physics, and size settings through Preferences DataStore. Existing unprefixed settings remain Seedy's migration-compatible keys; Hoots uses `hoots_` keys.
 - Optional Seedy-to-Hoots collision, off by default and available only on the Hoots page. Seedy-to-Seedy collision remains independent.
+- Hoots randomly reads, writes, or moves his wings while idle. An optional Hoots-only physics lock keeps him draggable and collision-visible while blocking gravity, throws, taps, blasts, and collision impulses; floating Hoots still uses idle animations.
+- Optional Hoots ChatGPT status bubbles mirror the newest active notification from the official ChatGPT Android app. Notification text is sanitized, memory-only, and rendered in a separate non-touchable overlay that follows Hoots without blocking the app underneath.
+- Hoots bubble appearance can be customized with native HSV pickers for border and fill, 20–100% opacity, and one-tap defaults. These controls appear only when notification reading is enabled; Hoots's hold menu can disable the bubble immediately.
+- Optional tap-to-open makes only the bubble card interactive and launches the official ChatGPT app; it is off by default, and touches outside the card still pass through.
+- Hoots's visually oversized normal idle frame is rendered at a measured 90% scale so transitions to writing, reading, and wing animations no longer make him abruptly shrink.
 - Optional tilt-directed gravity using Android's gravity sensor, with an accelerometer fallback.
 - Optional shake detonation under tilt gravity. Linear shake acceleration scales the existing detonation force from 1.5× to 4×, with a 700 ms cooldown.
 - Optional gravity-relative sprite rotation under tilt gravity, with enlarged overlay bounds to avoid clipping rotated Seedys.
@@ -47,7 +52,7 @@ Install it with:
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Open PetBlud, grant **Display over other apps**, optionally grant notification access, then wake Seedy or swipe to the Hoots page.
+Open PetBlud, grant **Display over other apps**, then wake Seedy or swipe to the Hoots page. To enable ChatGPT status bubbles, turn on the Hoots switch and approve PetBlud under Android's **Notification access** screen.
 
 ## Controls
 
@@ -68,14 +73,17 @@ Open PetBlud, grant **Display over other apps**, optionally grant notification a
 - API 26–29 use display metrics for bounds. API 30+ also excludes system-bar and display-cutout insets.
 - Tilt gravity, shake detonation, gravity-relative sprite rotation, keyboard avoidance, and cross-species collision are disabled by default. Motion options and sensor reactions are independently routed per species. If both pets enable shake, the same detected shake launches both using its measured strength.
 - Reliable IME visibility insets are available to this overlay on API 30+. Keyboard avoidance is therefore best-effort on API 26–29 and does not shrink the play area there.
+- Notification-listener access is separate from Android 13's permission to post PetBlud's foreground-service notification. Android warns that listener access can expose all notifications; PetBlud filters for package `com.openai.chatgpt` and never saves, logs, or transmits their contents.
+- The bubble reflects only text published by ChatGPT as an Android notification. It cannot show live Codex tool calls that ChatGPT does not publish. The newest notification remains visible while active; removing it falls back to the next active ChatGPT notification or clears the bubble.
+- Notification listeners are unavailable on low-RAM Android 10-and-earlier devices. PetBlud disables the feature on those devices.
 
 ## Verification
 
-The JVM suite contains 29 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, globally unique IDs, the one-Hoots limit, species-scoped chaos/removal, independent settings/bounds/gravity, cross-collision gating, Hoots dashboard copy, and per-species sensor routing.
+The JVM suite contains 38 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, Hoots idle activities and physics locking, notification filtering/sanitization/lifecycle, bubble placement/appearance/interaction flags, sprite normalization, and per-species sensor routing.
 
-An instrumentation APK compiles three device tests for controls/accessibility, pinned-header hierarchy, pager order, Seedy/Hoots labels, orange Hoots theming, and Hoots-only collision controls. Those tests require a device or emulator to execute.
+An instrumentation APK compiles five device tests for controls/accessibility, pinned-header hierarchy, pager order, Seedy/Hoots theming, Hoots-only appearance controls and hold-menu toggle, and the protected notification-listener declaration/access intent. Those tests require a device or emulator to execute.
 
-Device acceptance still requires an Android device or emulator with overlay access. Test API 26, API 31, and API 34 or newer, including rotation, screen-off/resume, notification stop, and touches outside every pet window.
+Device acceptance still requires an Android device or emulator with overlay and notification-listener access. Test API 26, API 31, and API 34 or newer, including real ChatGPT post/update/removal events, rotation, keyboard visibility, screen-off/resume, process restart, and touch pass-through beneath the bubble.
 
 ## Upstream and licensing
 

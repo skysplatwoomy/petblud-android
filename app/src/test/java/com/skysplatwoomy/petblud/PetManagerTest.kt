@@ -28,6 +28,10 @@ class PetManagerTest {
         assertFalse(normalized.shakeDetonation)
         assertFalse(normalized.keepUpright)
         assertFalse(normalized.avoidKeyboard)
+        assertFalse(normalized.disablePhysicsInteractions)
+        assertFalse(normalized.bubbleTapOpensChatGpt)
+        assertEquals(PetSettings.DEFAULT_BUBBLE_BORDER_COLOR, normalized.bubbleBorderColor)
+        assertEquals(PetSettings.DEFAULT_BUBBLE_FILL_COLOR, normalized.bubbleFillColor)
     }
 
     @Test
@@ -57,6 +61,21 @@ class PetManagerTest {
         assertTrue(repeatedHoots.isEmpty())
         assertEquals(PetSpecies.HOOTS, firstHoots.species)
         assertEquals(4, (seedys + firstHoots).map { it.id }.distinct().size)
+    }
+
+    @Test
+    fun hootsSnapshotCarriesLiveChatGptBubbleSetting() {
+        val manager = manager()
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+        assertFalse(manager.snapshot(hoots.id)?.showChatGptNotifications ?: true)
+
+        manager.applySettings(
+            manager.appSettings.copy(
+                hoots = manager.appSettings.hoots.copy(showChatGptNotifications = true),
+            ),
+        )
+
+        assertTrue(manager.snapshot(hoots.id)?.showChatGptNotifications == true)
     }
 
     @Test
@@ -128,6 +147,102 @@ class PetManagerTest {
         manager.applySettings(manager.appSettings.copy(seedyHootsCollision = true))
         manager.tick(0.0)
         assertTrue(hypot(seedy.x - hoots.x, seedy.y - hoots.y) > 0.001)
+    }
+
+    @Test
+    fun disabledHootsPhysicsAllowsDraggingButRejectsAllLaunchForces() {
+        val manager = PetManager(
+            settings = PetSettings(gravity = false),
+            hootsSettings = PetSettings(disablePhysicsInteractions = true),
+            bounds = WorldBounds(1080.0, 1920.0),
+            random = Random(7),
+        )
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+        hoots.x = 300.0
+        hoots.y = 400.0
+        val originalX = hoots.x
+        val originalY = hoots.y
+
+        manager.tick(PetManager.MAX_DELTA_SECONDS)
+        manager.explode(0.0, 0.0, PetSpecies.HOOTS)
+        manager.detonateAll(4.0, PetSpecies.HOOTS)
+        assertEquals(originalX, hoots.x, 0.0)
+        assertEquals(originalY, hoots.y, 0.0)
+        assertEquals(0.0, hoots.vx, 0.0)
+        assertEquals(0.0, hoots.vy, 0.0)
+
+        manager.pointerDown(hoots.id, 10.0, 10.0, 310.0, 410.0, 0.8)
+        manager.pointerUp(hoots.id, 10.0, 310.0, 410.0, 0.85)
+        assertEquals(0.0, hoots.vx, 0.0)
+        assertEquals(0.0, hoots.vy, 0.0)
+
+        manager.pointerDown(hoots.id, 10.0, 10.0, 310.0, 410.0, 1.0)
+        manager.pointerMove(hoots.id, 610.0, 710.0, 1.05)
+        manager.pointerUp(hoots.id, 10.0, 800.0, 900.0, 1.08)
+
+        assertTrue(hoots.x > originalX)
+        assertTrue(hoots.y > originalY)
+        assertEquals(0.0, hoots.vx, 0.0)
+        assertEquals(0.0, hoots.vy, 0.0)
+        assertEquals(PetAnimation.IDLE, hoots.animation)
+    }
+
+    @Test
+    fun disabledHootsPhysicsKeepsCrossCollisionAsAnImmovableObstacle() {
+        val manager = PetManager(
+            settings = PetSettings(gravity = false),
+            hootsSettings = PetSettings(gravity = false, disablePhysicsInteractions = true),
+            seedyHootsCollision = true,
+            bounds = WorldBounds(1080.0, 1920.0),
+            random = Random(7),
+        )
+        val seedy = manager.spawn(1, PetSpecies.SEEDY).single()
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+        listOf(seedy, hoots).forEach {
+            it.x = 300.0
+            it.y = 300.0
+            it.vx = 0.0
+            it.vy = 0.0
+        }
+
+        manager.tick(0.0)
+
+        assertEquals(300.0, hoots.x, 0.0)
+        assertEquals(300.0, hoots.y, 0.0)
+        assertEquals(0.0, hoots.vx, 0.0)
+        assertEquals(0.0, hoots.vy, 0.0)
+        assertTrue(hypot(seedy.x - hoots.x, seedy.y - hoots.y) > 0.001)
+        assertTrue(hypot(seedy.vx, seedy.vy) > 0.0)
+    }
+
+    @Test
+    fun hootsIdleActivitiesAreBookWritingAndWingMovementWithEqualSelectionSlots() {
+        val manager = manager()
+
+        assertEquals(
+            listOf(PetAnimation.EAT, PetAnimation.CODE, PetAnimation.CHEER),
+            manager.idleAnimationsFor(PetSpecies.HOOTS),
+        )
+    }
+
+    @Test
+    fun disabledHootsPhysicsCanPlayIdleActivitiesWhileFloating() {
+        val manager = PetManager(
+            hootsSettings = PetSettings(disablePhysicsInteractions = true),
+            bounds = WorldBounds(1080.0, 1920.0),
+            random = Random(7),
+        )
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+        hoots.x = 400.0
+        hoots.y = 500.0
+        hoots.specialTimer = 0.0
+
+        manager.tick(PetManager.MAX_DELTA_SECONDS)
+
+        assertTrue(hoots.animation in manager.idleAnimationsFor(PetSpecies.HOOTS))
+        assertFalse(hoots.animationLoop)
+        assertEquals(400.0, hoots.x, 0.0)
+        assertEquals(500.0, hoots.y, 0.0)
     }
 
     @Test

@@ -27,6 +27,7 @@ class PetOverlayMenuView(
         fun onDetonate()
         fun onGravityChanged(enabled: Boolean)
         fun onPhysicsChanged(multiplier: Double)
+        fun onChatGptBubbleChanged(enabled: Boolean)
         fun onOpenSettings()
         fun onRemoveThis()
         fun onRemoveOthers()
@@ -68,6 +69,13 @@ class PetOverlayMenuView(
             )
             isChecked = snapshot.gravityEnabled
             setOnCheckedChangeListener { _, enabled -> listener.onGravityChanged(enabled) }
+        }
+        findViewById<MaterialSwitch>(R.id.menuChatGptBubble).apply {
+            visibility = if (species == PetSpecies.HOOTS) View.VISIBLE else View.GONE
+            isChecked = snapshot.showChatGptNotifications
+            setOnCheckedChangeListener { _, enabled ->
+                listener.onChatGptBubbleChanged(enabled)
+            }
         }
         val physicsValue = findViewById<TextView>(R.id.menuPhysicsValue)
         findViewById<Slider>(R.id.menuPhysics).apply {

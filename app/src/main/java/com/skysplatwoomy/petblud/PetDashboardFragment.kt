@@ -23,6 +23,7 @@ class PetDashboardFragment : Fragment() {
     interface Host {
         fun requestPetStart(species: PetSpecies, count: Int)
         fun openOverlayPermission()
+        fun openNotificationListenerAccess()
         fun showSaving()
         fun showSaved()
     }
@@ -54,6 +55,18 @@ class PetDashboardFragment : Fragment() {
     private lateinit var keyboardSwitch: MaterialSwitch
     private lateinit var collisionSwitch: MaterialSwitch
     private lateinit var crossCollisionSwitch: MaterialSwitch
+    private lateinit var disablePhysicsInteractionsSwitch: MaterialSwitch
+    private lateinit var chatGptNotificationsCard: View
+    private lateinit var chatGptNotificationsSwitch: MaterialSwitch
+    private lateinit var chatGptNotificationsSupport: TextView
+    private lateinit var grantNotificationAccessButton: MaterialButton
+    private lateinit var bubbleAppearanceControls: View
+    private lateinit var bubbleBorderColorButton: MaterialButton
+    private lateinit var bubbleFillColorButton: MaterialButton
+    private lateinit var bubbleOpacitySlider: Slider
+    private lateinit var bubbleOpacityValue: TextView
+    private lateinit var resetBubbleAppearanceButton: MaterialButton
+    private lateinit var bubbleTapOpensChatGptSwitch: MaterialSwitch
     private lateinit var motionChildren: LinearLayout
     private lateinit var physicsSlider: Slider
     private lateinit var sizeSlider: Slider
@@ -61,6 +74,8 @@ class PetDashboardFragment : Fragment() {
     private lateinit var sizeValue: TextView
     private var hydrating = true
     private var saveRevision = 0L
+    private var bubbleBorderColor = PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
+    private var bubbleFillColor = PetSettings.DEFAULT_BUBBLE_FILL_COLOR
 
     private val statusRefresh = object : Runnable {
         override fun run() {
@@ -111,6 +126,7 @@ class PetDashboardFragment : Fragment() {
         if (::heroAction.isInitialized) {
             heroAction.removeCallbacks(statusRefresh)
             statusRefresh.run()
+            refreshNotificationControls()
         }
     }
 
@@ -138,6 +154,18 @@ class PetDashboardFragment : Fragment() {
         keyboardSwitch = root.findViewById(R.id.keyboardSwitch)
         collisionSwitch = root.findViewById(R.id.collisionSwitch)
         crossCollisionSwitch = root.findViewById(R.id.crossCollisionSwitch)
+        disablePhysicsInteractionsSwitch = root.findViewById(R.id.disablePhysicsInteractionsSwitch)
+        chatGptNotificationsCard = root.findViewById(R.id.chatGptNotificationsCard)
+        chatGptNotificationsSwitch = root.findViewById(R.id.chatGptNotificationsSwitch)
+        chatGptNotificationsSupport = root.findViewById(R.id.chatGptNotificationsSupport)
+        grantNotificationAccessButton = root.findViewById(R.id.grantNotificationAccessButton)
+        bubbleAppearanceControls = root.findViewById(R.id.bubbleAppearanceControls)
+        bubbleBorderColorButton = root.findViewById(R.id.bubbleBorderColorButton)
+        bubbleFillColorButton = root.findViewById(R.id.bubbleFillColorButton)
+        bubbleOpacitySlider = root.findViewById(R.id.bubbleOpacitySlider)
+        bubbleOpacityValue = root.findViewById(R.id.bubbleOpacityValue)
+        resetBubbleAppearanceButton = root.findViewById(R.id.resetBubbleAppearanceButton)
+        bubbleTapOpensChatGptSwitch = root.findViewById(R.id.bubbleTapOpensChatGptSwitch)
         motionChildren = root.findViewById(R.id.motionChildren)
         physicsSlider = root.findViewById(R.id.physicsSlider)
         sizeSlider = root.findViewById(R.id.sizeSlider)
@@ -175,15 +203,74 @@ class PetDashboardFragment : Fragment() {
         )
         collisionSwitch.visibility = if (hoots) View.GONE else View.VISIBLE
         crossCollisionSwitch.visibility = if (hoots) View.VISIBLE else View.GONE
+        disablePhysicsInteractionsSwitch.visibility = if (hoots) View.VISIBLE else View.GONE
+        chatGptNotificationsCard.visibility = if (hoots) View.VISIBLE else View.GONE
     }
 
     private fun bindListeners() {
-        listOf(gravitySwitch, shakeSwitch, uprightSwitch, keyboardSwitch, collisionSwitch, crossCollisionSwitch)
+        listOf(
+            gravitySwitch,
+            shakeSwitch,
+            uprightSwitch,
+            keyboardSwitch,
+            collisionSwitch,
+            crossCollisionSwitch,
+            disablePhysicsInteractionsSwitch,
+            bubbleTapOpensChatGptSwitch,
+        )
             .forEach { control ->
                 control.setOnCheckedChangeListener { _, _ -> saveImmediatelyIfReady() }
             }
         tiltGravitySwitch.setOnCheckedChangeListener { _, enabled ->
             showMotionChildren(enabled)
+            saveImmediatelyIfReady()
+        }
+        chatGptNotificationsSwitch.setOnCheckedChangeListener { _, enabled ->
+            refreshNotificationControls()
+            if (!hydrating) {
+                saveImmediatelyIfReady()
+                if (
+                    enabled && NotificationListenerAccess.isSupported(requireContext()) &&
+                    !NotificationListenerAccess.isGranted(requireContext())
+                ) {
+                    host.openNotificationListenerAccess()
+                }
+            }
+        }
+        grantNotificationAccessButton.setOnClickListener {
+            host.openNotificationListenerAccess()
+        }
+        bubbleBorderColorButton.setOnClickListener {
+            BubbleColorPickerDialog.show(
+                requireContext(),
+                getString(R.string.choose_bubble_border),
+                bubbleBorderColor,
+            ) { color ->
+                bubbleBorderColor = color
+                refreshBubbleAppearanceControls()
+                saveImmediatelyIfReady()
+            }
+        }
+        bubbleFillColorButton.setOnClickListener {
+            BubbleColorPickerDialog.show(
+                requireContext(),
+                getString(R.string.choose_bubble_fill),
+                bubbleFillColor,
+            ) { color ->
+                bubbleFillColor = color
+                refreshBubbleAppearanceControls()
+                saveImmediatelyIfReady()
+            }
+        }
+        bubbleOpacitySlider.addOnChangeListener { _, value, fromUser ->
+            bubbleOpacityValue.text = String.format(Locale.getDefault(), "%.0f%%", value)
+            if (fromUser && !hydrating) queueSliderSave()
+        }
+        resetBubbleAppearanceButton.setOnClickListener {
+            bubbleBorderColor = PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
+            bubbleFillColor = PetSettings.DEFAULT_BUBBLE_FILL_COLOR
+            bubbleOpacitySlider.value = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT.toFloat()
+            refreshBubbleAppearanceControls()
             saveImmediatelyIfReady()
         }
         physicsSlider.addOnChangeListener { _, value, fromUser ->
@@ -214,6 +301,14 @@ class PetDashboardFragment : Fragment() {
         keyboardSwitch.isChecked = settings.avoidKeyboard
         collisionSwitch.isChecked = settings.collision
         crossCollisionSwitch.isChecked = appSettings.seedyHootsCollision
+        disablePhysicsInteractionsSwitch.isChecked = settings.disablePhysicsInteractions
+        chatGptNotificationsSwitch.isChecked = settings.showChatGptNotifications
+        bubbleBorderColor = settings.bubbleBorderColor
+        bubbleFillColor = settings.bubbleFillColor
+        bubbleOpacitySlider.value = settings.bubbleOpacityPercent.toFloat()
+        bubbleTapOpensChatGptSwitch.isChecked = settings.bubbleTapOpensChatGpt
+        refreshBubbleAppearanceControls()
+        refreshNotificationControls()
         showMotionChildren(settings.tiltGravity)
         physicsSlider.value = settings.physicsMultiplier.toFloat()
         sizeSlider.value = settings.sizePercent.toFloat()
@@ -230,6 +325,27 @@ class PetDashboardFragment : Fragment() {
         physicsMultiplier = physicsSlider.value.toDouble(),
         sizePercent = sizeSlider.value.toDouble(),
         collision = species == PetSpecies.SEEDY && collisionSwitch.isChecked,
+        disablePhysicsInteractions = species == PetSpecies.HOOTS &&
+            disablePhysicsInteractionsSwitch.isChecked,
+        showChatGptNotifications = species == PetSpecies.HOOTS &&
+            chatGptNotificationsSwitch.isChecked,
+        bubbleBorderColor = if (species == PetSpecies.HOOTS) {
+            bubbleBorderColor
+        } else {
+            PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
+        },
+        bubbleFillColor = if (species == PetSpecies.HOOTS) {
+            bubbleFillColor
+        } else {
+            PetSettings.DEFAULT_BUBBLE_FILL_COLOR
+        },
+        bubbleOpacityPercent = if (species == PetSpecies.HOOTS) {
+            bubbleOpacitySlider.value.toDouble()
+        } else {
+            PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+        },
+        bubbleTapOpensChatGpt = species == PetSpecies.HOOTS &&
+            bubbleTapOpensChatGptSwitch.isChecked,
     )
 
     private fun saveImmediatelyIfReady() {
@@ -302,6 +418,59 @@ class PetDashboardFragment : Fragment() {
         )
         spawnButton.isEnabled = overlayAllowed
         detonateButton.isEnabled = count > 0
+        refreshNotificationControls()
+    }
+
+    private fun refreshNotificationControls() {
+        if (!::chatGptNotificationsCard.isInitialized || species != PetSpecies.HOOTS) return
+        val supported = NotificationListenerAccess.isSupported(requireContext())
+        val granted = supported && NotificationListenerAccess.isGranted(requireContext())
+        chatGptNotificationsSwitch.isEnabled = supported
+        bubbleAppearanceControls.visibility = if (chatGptNotificationsSwitch.isChecked) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+        chatGptNotificationsSupport.setText(
+            when {
+                !supported -> R.string.chatgpt_notifications_unavailable
+                chatGptNotificationsSwitch.isChecked && granted ->
+                    R.string.chatgpt_notifications_listening
+                chatGptNotificationsSwitch.isChecked ->
+                    R.string.chatgpt_notifications_permission_required
+                else -> R.string.chatgpt_notifications_privacy
+            },
+        )
+        grantNotificationAccessButton.visibility = if (
+            supported && chatGptNotificationsSwitch.isChecked && !granted
+        ) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+    }
+
+    private fun refreshBubbleAppearanceControls() {
+        if (!::bubbleBorderColorButton.isInitialized) return
+        val borderHex = BubbleColorPickerDialog.formatColor(bubbleBorderColor)
+        val fillHex = BubbleColorPickerDialog.formatColor(bubbleFillColor)
+        bubbleBorderColorButton.text = getString(
+            R.string.bubble_color_value,
+            getString(R.string.bubble_border),
+            borderHex,
+        )
+        bubbleFillColorButton.text = getString(
+            R.string.bubble_color_value,
+            getString(R.string.bubble_fill),
+            fillHex,
+        )
+        bubbleBorderColorButton.strokeColor = ColorStateList.valueOf(bubbleBorderColor)
+        bubbleFillColorButton.strokeColor = ColorStateList.valueOf(bubbleFillColor)
+        bubbleOpacityValue.text = String.format(
+            Locale.getDefault(),
+            "%.0f%%",
+            bubbleOpacitySlider.value,
+        )
     }
 
     companion object {
