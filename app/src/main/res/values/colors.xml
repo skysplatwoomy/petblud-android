@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pet_bg">#0B1118</color>
+    <color name="pet_surface">#151D24</color>
+    <color name="pet_surface_high">#1B252D</color>
+    <color name="pet_outline">#344148</color>
+    <color name="pet_cream">#FFF2C7</color>
+    <color name="pet_text_secondary">#A9B1B5</color>
+    <color name="pet_lime">#A9C83B</color>
+    <color name="pet_coral">#FF6B4A</color>
+    <color name="pet_success">#8FD67A</color>
+    <color name="pet_warning">#FFB86A</color>
+    <color name="hoots_orange">#F59A3D</color>
+    <color name="hoots_orange_soft">#FFB766</color>
+</resources>
