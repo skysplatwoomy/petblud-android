@@ -169,6 +169,11 @@ class PetManager(
         pet.pressRootY = rawY
         pet.dragVx = 0.0
         pet.dragVy = 0.0
+        pet.dragAnimation = if (pet.facing >= 0) {
+            PetAnimation.WALK_RIGHT
+        } else {
+            PetAnimation.WALK_LEFT
+        }
         pet.dragSamples.clear()
         pet.dragSamples += DragSample(timeSeconds, rawX, rawY)
     }
@@ -189,12 +194,7 @@ class PetManager(
             pet.dragSamples += DragSample(timeSeconds, rawX, rawY)
             pet.dragVx = rawX - pet.pressRootX
             pet.dragVy = rawY - pet.pressRootY
-            setAnimation(
-                pet,
-                dragAnimationFor(pet.dragVx, pet.dragVy, pet.facing),
-                loop = true,
-                restart = true,
-            )
+            applyDragAnimation(pet, restart = true)
         }
 
         recordDragSample(pet, rawX, rawY, timeSeconds)
@@ -246,6 +246,7 @@ class PetManager(
         pet.dragSamples.clear()
         pet.dragVx = 0.0
         pet.dragVy = 0.0
+        pet.dragAnimation = null
         pet.dragging = false
         pet.didDrag = false
     }
@@ -255,6 +256,7 @@ class PetManager(
             dragSamples.clear()
             dragVx = 0.0
             dragVy = 0.0
+            dragAnimation = null
             dragging = false
             didDrag = false
             if (physicsInteractionsDisabled(this)) {
@@ -400,11 +402,7 @@ class PetManager(
 
     private fun pickAnimation(pet: PetState, onGravitySurface: Boolean, impactSpeed: Double) {
         if (pet.dragging && pet.didDrag) {
-            setAnimation(
-                pet,
-                dragAnimationFor(pet.dragVx, pet.dragVy, pet.facing),
-                loop = true,
-            )
+            applyDragAnimation(pet)
             return
         }
         if (pet.animation != null && oneShotPlaying(pet)) return
@@ -606,17 +604,33 @@ class PetManager(
         velocityX: Double,
         velocityY: Double,
         facing: Int = 1,
+        previous: PetAnimation? = null,
     ): PetAnimation {
+        if (isDownwardDrag(velocityX, velocityY)) {
+            return previous ?: if (facing >= 0) PetAnimation.WALK_RIGHT else PetAnimation.WALK_LEFT
+        }
         if (hypot(velocityX, velocityY) <= DRAG_DIRECTION_EPSILON) {
             return if (facing >= 0) PetAnimation.WALK_RIGHT else PetAnimation.WALK_LEFT
         }
         return if (abs(velocityX) >= abs(velocityY)) {
             if (velocityX >= 0.0) PetAnimation.WALK_RIGHT else PetAnimation.WALK_LEFT
-        } else if (velocityY < 0.0) {
-            PetAnimation.JUMP
         } else {
-            PetAnimation.FALL
+            PetAnimation.JUMP
         }
+    }
+
+    internal fun isDownwardDrag(velocityX: Double, velocityY: Double): Boolean =
+        velocityY > DRAG_DIRECTION_EPSILON && abs(velocityY) > abs(velocityX)
+
+    private fun applyDragAnimation(pet: PetState, restart: Boolean = false) {
+        val animation = dragAnimationFor(
+            pet.dragVx,
+            pet.dragVy,
+            pet.facing,
+            previous = pet.dragAnimation,
+        )
+        pet.dragAnimation = animation
+        setAnimation(pet, animation, loop = true, restart = restart)
     }
 
     private fun applyCollisions() {

@@ -556,18 +556,49 @@ class PetManagerTest {
     }
 
     @Test
-    fun draggingUsesAnimatedSpritesForEveryScreenDirectionAndBothSpecies() {
+    fun draggingUsesDirectionalSpritesForEveryScreenDirectionAndBothSpecies() {
         val manager = manager()
         assertEquals(PetAnimation.WALK_RIGHT, manager.dragAnimationFor(500.0, 20.0))
         assertEquals(PetAnimation.WALK_LEFT, manager.dragAnimationFor(-500.0, 20.0))
         assertEquals(PetAnimation.JUMP, manager.dragAnimationFor(20.0, -500.0))
-        assertEquals(PetAnimation.FALL, manager.dragAnimationFor(20.0, 500.0))
+        assertEquals(
+            PetAnimation.WALK_LEFT,
+            manager.dragAnimationFor(20.0, 500.0, previous = PetAnimation.WALK_LEFT),
+        )
+        assertEquals(
+            PetAnimation.JUMP,
+            manager.dragAnimationFor(20.0, 500.0, previous = PetAnimation.JUMP),
+        )
+        assertTrue(manager.isDownwardDrag(20.0, 500.0))
+        assertFalse(manager.isDownwardDrag(500.0, 20.0))
 
         PetSpecies.entries.forEach { species ->
             val pet = manager.spawn(1, species).single()
             manager.pointerDown(pet.id, 10.0, 10.0, 100.0, 100.0, 1.0)
             manager.pointerMove(pet.id, 180.0, 100.0, 1.02)
             manager.pointerMove(pet.id, 260.0, 100.0, 1.08)
+            repeat(4) { manager.tick(PetManager.MAX_DELTA_SECONDS) }
+
+            assertEquals(PetAnimation.WALK_RIGHT, pet.animation)
+            assertTrue(pet.frameIndex > 0)
+            manager.cancelPointer(pet.id)
+        }
+    }
+
+    @Test
+    fun downwardDraggingKeepsPreviousDirectionalAnimationForBothSpecies() {
+        val manager = manager()
+
+        PetSpecies.entries.forEach { species ->
+            val pet = manager.spawn(1, species).single()
+            manager.pointerDown(pet.id, 10.0, 10.0, 300.0, 300.0, 1.0)
+            manager.pointerMove(pet.id, 380.0, 300.0, 1.02)
+            manager.pointerMove(pet.id, 460.0, 300.0, 1.08)
+            repeat(4) { manager.tick(PetManager.MAX_DELTA_SECONDS) }
+            assertEquals(PetAnimation.WALK_RIGHT, pet.animation)
+
+            manager.pointerMove(pet.id, 460.0, 380.0, 1.12)
+            manager.pointerMove(pet.id, 460.0, 460.0, 1.18)
             repeat(4) { manager.tick(PetManager.MAX_DELTA_SECONDS) }
 
             assertEquals(PetAnimation.WALK_RIGHT, pet.animation)

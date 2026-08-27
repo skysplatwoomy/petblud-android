@@ -4,8 +4,8 @@ Verification performed on 2026-08-27 for PetBlud 0.7.2.
 
 ## Automated checks
 
-- `testDebugUnitTest`: 44 tests, 0 failures, 0 errors.
-- `testReleaseUnitTest`: 44 tests, 0 failures, 0 errors.
+- `testDebugUnitTest`: 45 tests, 0 failures, 0 errors.
+- `testReleaseUnitTest`: 45 tests, 0 failures, 0 errors.
 - Android lint: no issues found, with warnings treated as errors.
 - Debug APK assembly: successful.
 - Debug instrumentation APK assembly: successful (6 device tests compiled).
@@ -38,8 +38,9 @@ species-level 100% size baseline.
 The Hoots timing follow-up verifies the shared 10-second reading/writing
 activity length, 0.15-second reading frames, zero-based writing frame 2 as the
 0.25-second coffee hold, and exact quarter-second frame-boundary advancement.
-The current follow-up verifies animated right, left, upward, and downward drag
-poses for both species, including physics-locked Hoots. Bubble appearance now
+The current follow-up verifies animated right, left, and upward drag poses plus
+retaining the last directional pose while moving downward for both species,
+including physics-locked Hoots. Bubble appearance now
 normalizes independent border, fill, and text colours and opacities, resolves
 dark/light/system modes, and retains separate editable dark and light presets.
 
@@ -56,7 +57,7 @@ The verified working-tree artifact is `app/build/outputs/apk/debug/app-debug.apk
 
 ```text
 Size: 13,218,128 bytes
-SHA-256: ccf6ed1ebac9837a1401967c97830a83a77dbd18a773f0b7c5e95deb36fb3d2e
+SHA-256: c95e51d78e213ca6dabac1a988e6c6c149fbf5baedc4baa059df661d463c3694
 ```
 
 ## Remaining device checks

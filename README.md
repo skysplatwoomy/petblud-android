@@ -11,7 +11,7 @@ Current build: **0.7.2**.
 - Transparent, independently touchable `TYPE_APPLICATION_OVERLAY` windows, so touches outside a pet still reach the app underneath.
 - The original 11 animation rows, frame counts, and frame rates.
 - The original gravity, bounce, throw, hard-landing, idle-emote, explosion, and collision behavior.
-- Tap to hop, drag to throw, and long-press for a service-owned popover that never switches away from the app underneath. While dragged, both pets animate toward the pointer: left/right use their directional rows (Hoots flaps his wings), while upward/downward motion uses jump/fall.
+- Tap to hop, drag to throw, and long-press for a service-owned popover that never switches away from the app underneath. While dragged, both pets animate left/right (Hoots flaps his wings) and upward; downward movement keeps the last active drag animation instead of switching to its own animation.
 - A dark Material dashboard with live per-species status, contextual controls, and accessible 48 dp targets.
 - A pinned `petblud` header that stays visible while the dashboard scrolls and respects status-bar, cutout, and navigation-bar insets.
 - Horizontally swipeable Seedy and Hoots pages with visible tabs, green Seedy accents, and orange Hoots accents.
@@ -80,7 +80,7 @@ Open PetBlud, grant **Display over other apps**, then wake Seedy or swipe to the
 
 ## Verification
 
-The JVM suite contains 44 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, four-way drag animation for both species, Hoots idle activities and frame timing, physics locking, notification filtering/sanitization/lifecycle, bubble placement/theme resolution/appearance/interaction flags, sprite and baseline normalization, typed numeric parsing, and per-species sensor routing.
+The JVM suite contains 45 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, directional drag poses and downward direction retention for both species, Hoots idle activities and frame timing, physics locking, notification filtering/sanitization/lifecycle, bubble placement/theme resolution/appearance/interaction flags, sprite and baseline normalization, typed numeric parsing, and per-species sensor routing.
 
 An instrumentation APK compiles six device tests for controls/accessibility, pinned-header hierarchy, pager order, Seedy/Hoots theming, Hoots-only appearance controls and hold-menu toggle, crash-free colour-picker opening, and the protected notification-listener declaration/access intent. Those tests require a device or emulator to execute.
 
