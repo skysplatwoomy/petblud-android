@@ -2,7 +2,7 @@
 
 Native Kotlin port of [skysplatwoomy/petblud](https://github.com/skysplatwoomy/petblud), implemented as a user-enabled system-wide Android overlay.
 
-Current build: **0.7.1**.
+Current build: **0.7.2**.
 
 ## What is implemented
 
@@ -17,7 +17,7 @@ Current build: **0.7.1**.
 - Horizontally swipeable Seedy and Hoots pages with visible tabs, green Seedy accents, and orange Hoots accents.
 - Fully separate gravity, motion, keyboard avoidance, physics, and size settings through Preferences DataStore. Existing unprefixed settings remain Seedy's migration-compatible keys; Hoots uses `hoots_` keys.
 - Optional Seedy-to-Hoots collision, off by default and available only on the Hoots page. Seedy-to-Seedy collision remains independent.
-- Hoots randomly reads, writes, or moves his wings while idle. Reading and writing each run for the same 10 seconds as Seedy's laptop activity; reading holds every frame for 0.25 seconds, and writing holds the coffee-at-mouth frame for 0.25 seconds. An optional Hoots-only physics lock keeps him draggable and collision-visible while blocking gravity, throws, taps, blasts, and collision impulses; floating Hoots still uses idle animations.
+- Hoots randomly reads, writes, or moves his wings while idle. Reading and writing each run for the same 10 seconds as Seedy's laptop activity; reading holds every frame for 0.15 seconds, and writing holds the coffee-at-mouth frame for 0.25 seconds. An optional Hoots-only physics lock keeps him draggable and collision-visible while blocking gravity, throws, taps, blasts, and collision impulses; floating Hoots still uses idle animations.
 - Optional Hoots ChatGPT status bubbles mirror the newest active notification from the official ChatGPT Android app. Notification text is sanitized, memory-only, and rendered in a separate non-touchable overlay that follows Hoots without blocking the app underneath.
 - Hoots bubble appearance uses crash-safe continuous HSV pickers. Border and fill each have their own 0–100% opacity inside the picker, text has a separate opacity control, and one tap restores every default. These controls appear only when notification reading is enabled; Hoots's hold menu can disable the bubble immediately.
 - Optional tap-to-open makes only the bubble card interactive and launches the official ChatGPT app; it is off by default, and touches outside the card still pass through.

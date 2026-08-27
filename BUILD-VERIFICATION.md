@@ -1,6 +1,6 @@
 # Build verification
 
-Verification performed on 2026-08-27 for PetBlud 0.7.1.
+Verification performed on 2026-08-27 for PetBlud 0.7.2.
 
 ## Automated checks
 
@@ -36,7 +36,7 @@ Version 0.7.0 adds regression coverage for independent border/fill/text
 opacity bounds, typed-number parsing/clamping/step snapping, and Hoots's
 species-level 100% size baseline.
 The Hoots timing follow-up verifies the shared 10-second reading/writing
-activity length, 0.25-second reading frames, zero-based writing frame 2 as the
+activity length, 0.15-second reading frames, zero-based writing frame 2 as the
 0.25-second coffee hold, and exact quarter-second frame-boundary advancement.
 
 The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
@@ -48,11 +48,11 @@ The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 
 ## Artifact
 
-The root output directory contains `PetBlud-0.7.1-debug.apk`.
+The root output directory contains `PetBlud-0.7.2-debug.apk`.
 
 ```text
 Size: 11,864,742 bytes
-SHA-256: cea8b48a6a26b55f02542f6ba7ec70bf27cc52ab0555ea7a9d980d15ca60c7c6
+SHA-256: 37372ef08d2abfb1e578e9510a015f971141a7e721a59ed3595e08dbcb275edc
 ```
 
 ## Remaining device checks
@@ -70,7 +70,7 @@ overlay checks, repeated Hoots wake requests, cross-collision behavior,
 independent motion/keyboard settings, pager swipes, and both species' menus.
 The Hoots physics-interaction toggle still needs touch, blast, sensor-shake,
 floating-idle, and cross-collision acceptance testing on a physical device.
-Version 0.7.1 additionally needs notification-access grant/revoke checks, real
+Version 0.7.2 additionally needs notification-access grant/revoke checks, real
 ChatGPT post/update/removal events, in-memory caching while Hoots is absent,
 bubble following and touch pass-through, keyboard clamping, listener reconnect,
 and confirmation that every non-ChatGPT package is ignored.

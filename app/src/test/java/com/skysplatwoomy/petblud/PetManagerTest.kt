@@ -259,7 +259,7 @@ class PetManagerTest {
         PetAnimation.CHEER.frameCount.let { count ->
             repeat(count) { frame ->
                 assertEquals(
-                    0.25,
+                    0.15,
                     PetAnimationTiming.frameDuration(
                         PetSpecies.HOOTS,
                         PetAnimation.CHEER,
@@ -309,11 +309,11 @@ class PetManagerTest {
         hoots.frameIndex = 0
         hoots.frameTime = 0.0
         hoots.idleActivityTimeRemaining = PetAnimationTiming.LAPTOP_ACTIVITY_SECONDS
-        repeat(9) { manager.tick(0.025) }
+        repeat(5) { manager.tick(0.025) }
         assertEquals(0, hoots.frameIndex)
         manager.tick(0.025)
         assertEquals(1, hoots.frameIndex)
-        repeat(390) { manager.tick(0.025) }
+        repeat(394) { manager.tick(0.025) }
         assertEquals(null, hoots.animation)
         assertEquals(0.0, hoots.idleActivityTimeRemaining, 0.0)
     }
