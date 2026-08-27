@@ -240,6 +240,85 @@ class PetManagerTest {
     }
 
     @Test
+    fun hootsReadingAndWritingUseLaptopLengthAndRequestedFrameHolds() {
+        assertEquals(
+            PetAnimationTiming.LAPTOP_ACTIVITY_SECONDS,
+            PetAnimationTiming.activityDuration(PetSpecies.SEEDY, PetAnimation.CODE),
+            0.0,
+        )
+        assertEquals(
+            PetAnimationTiming.LAPTOP_ACTIVITY_SECONDS,
+            PetAnimationTiming.activityDuration(PetSpecies.HOOTS, PetAnimation.CODE),
+            0.0,
+        )
+        assertEquals(
+            PetAnimationTiming.LAPTOP_ACTIVITY_SECONDS,
+            PetAnimationTiming.activityDuration(PetSpecies.HOOTS, PetAnimation.CHEER),
+            0.0,
+        )
+        PetAnimation.CHEER.frameCount.let { count ->
+            repeat(count) { frame ->
+                assertEquals(
+                    0.25,
+                    PetAnimationTiming.frameDuration(
+                        PetSpecies.HOOTS,
+                        PetAnimation.CHEER,
+                        frame,
+                    ),
+                    0.0,
+                )
+            }
+        }
+        assertEquals(
+            0.25,
+            PetAnimationTiming.frameDuration(
+                PetSpecies.HOOTS,
+                PetAnimation.CODE,
+                PetAnimationTiming.HOOTS_COFFEE_FRAME_INDEX,
+            ),
+            0.0,
+        )
+        assertEquals(
+            1.0 / PetAnimation.CODE.framesPerSecond,
+            PetAnimationTiming.frameDuration(PetSpecies.HOOTS, PetAnimation.CODE, 1),
+            0.0,
+        )
+    }
+
+    @Test
+    fun hootsReadingRunsForTenSecondsAndCoffeeFrameHoldsQuarterSecond() {
+        val manager = PetManager(
+            hootsSettings = PetSettings(disablePhysicsInteractions = true),
+            bounds = WorldBounds(1080.0, 1920.0),
+            random = Random(7),
+        )
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+        hoots.animation = PetAnimation.CODE
+        hoots.animationLoop = false
+        hoots.frameIndex = PetAnimationTiming.HOOTS_COFFEE_FRAME_INDEX
+        hoots.frameTime = 0.0
+        hoots.idleActivityTimeRemaining = PetAnimationTiming.LAPTOP_ACTIVITY_SECONDS
+
+        repeat(9) { manager.tick(0.025) }
+        assertEquals(PetAnimationTiming.HOOTS_COFFEE_FRAME_INDEX, hoots.frameIndex)
+        manager.tick(0.025)
+        assertEquals(PetAnimationTiming.HOOTS_COFFEE_FRAME_INDEX + 1, hoots.frameIndex)
+
+        hoots.animation = PetAnimation.CHEER
+        hoots.animationLoop = false
+        hoots.frameIndex = 0
+        hoots.frameTime = 0.0
+        hoots.idleActivityTimeRemaining = PetAnimationTiming.LAPTOP_ACTIVITY_SECONDS
+        repeat(9) { manager.tick(0.025) }
+        assertEquals(0, hoots.frameIndex)
+        manager.tick(0.025)
+        assertEquals(1, hoots.frameIndex)
+        repeat(390) { manager.tick(0.025) }
+        assertEquals(null, hoots.animation)
+        assertEquals(0.0, hoots.idleActivityTimeRemaining, 0.0)
+    }
+
+    @Test
     fun disabledHootsPhysicsCanPlayIdleActivitiesWhileFloating() {
         val manager = PetManager(
             hootsSettings = PetSettings(disablePhysicsInteractions = true),

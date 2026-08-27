@@ -6,7 +6,7 @@
     <string name="notification_title">PetBlud is running</string>
     <string name="notification_text">Tap for settings. Add Seedy or Hoots from this notification.</string>
     <string name="wordmark">petblud</string>
-    <string name="version_label">0.7.0</string>
+    <string name="version_label">0.7.1</string>
     <string name="saving">Saving…</string>
     <string name="saved">Saved</string>
     <string name="motion_and_gravity">Motion &amp; gravity</string>

@@ -467,7 +467,7 @@ class PetManager(
 
     private fun startOneShot(pet: PetState, animation: PetAnimation) {
         pet.pendingOneShot = null
-        pet.codeTimeRemaining = if (animation == PetAnimation.CODE) 10.0 else 0.0
+        pet.idleActivityTimeRemaining = PetAnimationTiming.activityDuration(pet.species, animation)
         setAnimation(pet, animation, loop = false, restart = true)
     }
 
@@ -483,7 +483,9 @@ class PetManager(
         }
         pet.animation = animation
         pet.animationLoop = loop
-        if (animation != PetAnimation.CODE) pet.codeTimeRemaining = 0.0
+        if (PetAnimationTiming.activityDuration(pet.species, animation) == 0.0) {
+            pet.idleActivityTimeRemaining = 0.0
+        }
         pet.frameIndex = 0
         pet.frameTime = 0.0
     }
@@ -491,16 +493,23 @@ class PetManager(
     private fun advanceAnimation(pet: PetState, dt: Double) {
         val animation = pet.animation ?: return
         if (animation.frameCount <= 1) return
-        if (animation == PetAnimation.CODE) {
-            pet.codeTimeRemaining = (pet.codeTimeRemaining - dt).coerceAtLeast(0.0)
+        val timedActivity = pet.idleActivityTimeRemaining > 0.0
+        if (timedActivity) {
+            pet.idleActivityTimeRemaining =
+                (pet.idleActivityTimeRemaining - dt).coerceAtLeast(0.0)
         }
         pet.frameTime += dt
-        val step = 1.0 / animation.framesPerSecond.coerceAtLeast(1.0)
-        while (pet.frameTime >= step) {
-            pet.frameTime -= step
+        while (true) {
+            val step = PetAnimationTiming.frameDuration(
+                pet.species,
+                animation,
+                pet.frameIndex,
+            )
+            if (pet.frameTime + FRAME_TIME_EPSILON_SECONDS < step) break
+            pet.frameTime = (pet.frameTime - step).coerceAtLeast(0.0)
             pet.frameIndex += 1
             if (pet.frameIndex >= animation.frameCount) {
-                if (animation == PetAnimation.CODE && pet.codeTimeRemaining > 0.0) {
+                if (timedActivity && pet.idleActivityTimeRemaining > 0.0) {
                     pet.frameIndex = 0
                     continue
                 }
@@ -513,6 +522,10 @@ class PetManager(
                     break
                 }
             }
+        }
+        if (timedActivity && pet.idleActivityTimeRemaining <= 0.0) {
+            pet.animation = null
+            pet.frameTime = 0.0
         }
     }
 
@@ -697,6 +710,7 @@ class PetManager(
         const val MAX_PETS = 100
         const val MAX_HOOTS = 1
         const val MAX_DELTA_SECONDS = 0.033
+        private const val FRAME_TIME_EPSILON_SECONDS = 1e-9
         const val GRAVITY = 1350.0
         const val WALK_SPEED = 40.0
         const val HARD_LAND_SPEED = 420.0

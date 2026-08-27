@@ -58,7 +58,7 @@ class PetState internal constructor(
     var cheerOnLand: Boolean = false
     var pendingOneShot: PetAnimation? = null
     var specialTimer: Double = specialTimer
-    var codeTimeRemaining: Double = 0.0
+    var idleActivityTimeRemaining: Double = 0.0
 
     val width: Double
         get() = baseWidth(species) * sizePercent / 100.0

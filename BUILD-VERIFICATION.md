@@ -1,11 +1,11 @@
 # Build verification
 
-Verification performed on 2026-08-27 for PetBlud 0.7.0.
+Verification performed on 2026-08-27 for PetBlud 0.7.1.
 
 ## Automated checks
 
-- `testDebugUnitTest`: 40 tests, 0 failures, 0 errors.
-- `testReleaseUnitTest`: 40 tests, 0 failures, 0 errors.
+- `testDebugUnitTest`: 42 tests, 0 failures, 0 errors.
+- `testReleaseUnitTest`: 42 tests, 0 failures, 0 errors.
 - Android lint: no issues found, with warnings treated as errors.
 - Debug APK assembly: successful.
 - Debug instrumentation APK assembly: successful (6 device tests compiled).
@@ -35,6 +35,9 @@ hold-menu setting snapshot, and Hoots-only idle sprite normalization.
 Version 0.7.0 adds regression coverage for independent border/fill/text
 opacity bounds, typed-number parsing/clamping/step snapping, and Hoots's
 species-level 100% size baseline.
+The Hoots timing follow-up verifies the shared 10-second reading/writing
+activity length, 0.25-second reading frames, zero-based writing frame 2 as the
+0.25-second coffee hold, and exact quarter-second frame-boundary advancement.
 
 The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 192 x 208 cell grid as Seedy. Imported sheet SHA-256:
@@ -45,11 +48,11 @@ The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 
 ## Artifact
 
-The root output directory contains `PetBlud-0.7.0-debug.apk`.
+The root output directory contains `PetBlud-0.7.1-debug.apk`.
 
 ```text
 Size: 11,864,742 bytes
-SHA-256: 87797e2766b7d4bc675617d6060e55c8cfaf8fe7bc23910ec35d069de5dcf78a
+SHA-256: cea8b48a6a26b55f02542f6ba7ec70bf27cc52ab0555ea7a9d980d15ca60c7c6
 ```
 
 ## Remaining device checks
@@ -67,7 +70,7 @@ overlay checks, repeated Hoots wake requests, cross-collision behavior,
 independent motion/keyboard settings, pager swipes, and both species' menus.
 The Hoots physics-interaction toggle still needs touch, blast, sensor-shake,
 floating-idle, and cross-collision acceptance testing on a physical device.
-Version 0.7.0 additionally needs notification-access grant/revoke checks, real
+Version 0.7.1 additionally needs notification-access grant/revoke checks, real
 ChatGPT post/update/removal events, in-memory caching while Hoots is absent,
 bubble following and touch pass-through, keyboard clamping, listener reconnect,
 and confirmation that every non-ChatGPT package is ignored.
