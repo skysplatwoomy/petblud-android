@@ -2,7 +2,7 @@
 
 Native Kotlin port of [skysplatwoomy/petblud](https://github.com/skysplatwoomy/petblud), implemented as a user-enabled system-wide Android overlay.
 
-Current build: **0.7.2**.
+Current build: **0.8.0**.
 
 ## What is implemented
 

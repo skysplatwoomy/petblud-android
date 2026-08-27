@@ -1,6 +1,6 @@
 # Build verification
 
-Verification performed on 2026-08-27 for PetBlud 0.7.2.
+Verification performed on 2026-08-27 for PetBlud 0.8.0.
 
 ## Automated checks
 
@@ -53,11 +53,11 @@ The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 
 ## Artifact
 
-The verified working-tree artifact is `app/build/outputs/apk/debug/app-debug.apk`.
+The root output directory contains `PetBlud-0.8.0-debug.apk`.
 
 ```text
-Size: 13,218,128 bytes
-SHA-256: c95e51d78e213ca6dabac1a988e6c6c149fbf5baedc4baa059df661d463c3694
+Size: 11,866,586 bytes
+SHA-256: ed575c14468225cc4301e4a8a3f95aea0c560e31205d3fd29ad6973df4d37b77
 ```
 
 ## Remaining device checks
@@ -75,7 +75,7 @@ overlay checks, repeated Hoots wake requests, cross-collision behavior,
 independent motion/keyboard settings, pager swipes, and both species' menus.
 The Hoots physics-interaction toggle still needs touch, blast, sensor-shake,
 floating-idle, and cross-collision acceptance testing on a physical device.
-Version 0.7.2 additionally needs notification-access grant/revoke checks, real
+Version 0.8.0 additionally needs notification-access grant/revoke checks, real
 ChatGPT post/update/removal events, in-memory caching while Hoots is absent,
 bubble following and touch pass-through, keyboard clamping, listener reconnect,
 and confirmation that every non-ChatGPT package is ignored.
