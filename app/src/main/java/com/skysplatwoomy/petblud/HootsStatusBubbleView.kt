@@ -43,7 +43,9 @@ class HootsStatusBubbleView(context: Context) : LinearLayout(context) {
     private var tailCenterX = dp(40)
     private var borderColor = PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
     private var fillColor = PetSettings.DEFAULT_BUBBLE_FILL_COLOR
-    private var opacityPercent = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+    private var borderOpacityPercent = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+    private var fillOpacityPercent = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+    private var textOpacityPercent = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
 
     init {
         orientation = VERTICAL
@@ -61,27 +63,49 @@ class HootsStatusBubbleView(context: Context) : LinearLayout(context) {
         bodyView.visibility = if (status.body.isEmpty()) View.GONE else View.VISIBLE
     }
 
-    fun applyAppearance(border: Int, fill: Int, opacity: Double) {
-        val normalizedOpacity = opacity.coerceIn(
+    fun applyAppearance(
+        border: Int,
+        borderOpacity: Double,
+        fill: Int,
+        fillOpacity: Double,
+        textOpacity: Double,
+    ) {
+        val normalizedBorderOpacity = borderOpacity.coerceIn(
+            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
+            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
+        )
+        val normalizedFillOpacity = fillOpacity.coerceIn(
+            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
+            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
+        )
+        val normalizedTextOpacity = textOpacity.coerceIn(
             PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
             PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
         )
         if (
-            borderColor == border && fillColor == fill && opacityPercent == normalizedOpacity
+            borderColor == border && fillColor == fill &&
+            borderOpacityPercent == normalizedBorderOpacity &&
+            fillOpacityPercent == normalizedFillOpacity &&
+            textOpacityPercent == normalizedTextOpacity
         ) {
             return
         }
         borderColor = border
         fillColor = fill
-        opacityPercent = normalizedOpacity
-        val alpha = (255 * normalizedOpacity / 100.0).toInt().coerceIn(0, 255)
-        strokePaint.color = ColorUtils.setAlphaComponent(border, alpha)
-        fillPaint.color = ColorUtils.setAlphaComponent(fill, alpha)
-        val textColor = if (ColorUtils.calculateLuminance(fill) < 0.42) {
+        borderOpacityPercent = normalizedBorderOpacity
+        fillOpacityPercent = normalizedFillOpacity
+        textOpacityPercent = normalizedTextOpacity
+        val borderAlpha = opacityAlpha(normalizedBorderOpacity)
+        val fillAlpha = opacityAlpha(normalizedFillOpacity)
+        val textAlpha = opacityAlpha(normalizedTextOpacity)
+        strokePaint.color = ColorUtils.setAlphaComponent(border, borderAlpha)
+        fillPaint.color = ColorUtils.setAlphaComponent(fill, fillAlpha)
+        val opaqueTextColor = if (ColorUtils.calculateLuminance(fill) < 0.42) {
             Color.WHITE
         } else {
             ContextCompat.getColor(context, R.color.pet_bg)
         }
+        val textColor = ColorUtils.setAlphaComponent(opaqueTextColor, textAlpha)
         titleView.setTextColor(textColor)
         bodyView.setTextColor(textColor)
         invalidate()
@@ -145,4 +169,7 @@ class HootsStatusBubbleView(context: Context) : LinearLayout(context) {
     private fun dp(value: Int): Int = (value * density).toInt()
 
     private fun dpFloat(value: Float): Float = value * density
+
+    private fun opacityAlpha(percent: Double): Int =
+        (255 * percent / 100.0).toInt().coerceIn(0, 255)
 }

@@ -801,8 +801,10 @@ class PetOverlayService : Service(), PetOverlayView.Listener, SensorEventListene
         window.view.showStatus(status)
         window.view.applyAppearance(
             border = currentSettings.hoots.bubbleBorderColor,
+            borderOpacity = currentSettings.hoots.bubbleBorderOpacityPercent,
             fill = currentSettings.hoots.bubbleFillColor,
-            opacity = currentSettings.hoots.bubbleOpacityPercent,
+            fillOpacity = currentSettings.hoots.bubbleFillOpacityPercent,
+            textOpacity = currentSettings.hoots.bubbleTextOpacityPercent,
         )
         val interactive = currentSettings.hoots.bubbleTapOpensChatGpt
         window.view.isClickable = interactive

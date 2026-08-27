@@ -61,10 +61,10 @@ class PetState internal constructor(
     var codeTimeRemaining: Double = 0.0
 
     val width: Double
-        get() = BASE_WIDTH * sizePercent / 100.0
+        get() = baseWidth(species) * sizePercent / 100.0
 
     val height: Double
-        get() = BASE_HEIGHT * sizePercent / 100.0
+        get() = baseHeight(species) * sizePercent / 100.0
 
     fun snapshot(showChatGptNotifications: Boolean = false): PetSnapshot = PetSnapshot(
         id = id,
@@ -78,5 +78,12 @@ class PetState internal constructor(
     companion object {
         const val BASE_WIDTH = 116.0
         const val BASE_HEIGHT = 126.0
+        const val HOOTS_BASE_SCALE = 0.85
+
+        fun baseWidth(species: PetSpecies): Double =
+            BASE_WIDTH * if (species == PetSpecies.HOOTS) HOOTS_BASE_SCALE else 1.0
+
+        fun baseHeight(species: PetSpecies): Double =
+            BASE_HEIGHT * if (species == PetSpecies.HOOTS) HOOTS_BASE_SCALE else 1.0
     }
 }

@@ -64,6 +64,20 @@ class PetManagerTest {
     }
 
     @Test
+    fun hootsAtOneHundredPercentUsesComparableSmallerBaseFootprint() {
+        val manager = manager()
+        val seedy = manager.spawn(1, PetSpecies.SEEDY).single()
+        val hoots = manager.spawn(1, PetSpecies.HOOTS).single()
+
+        assertEquals(PetState.BASE_WIDTH, seedy.width, 0.0)
+        assertEquals(PetState.BASE_HEIGHT, seedy.height, 0.0)
+        assertEquals(PetState.BASE_WIDTH * PetState.HOOTS_BASE_SCALE, hoots.width, 0.0)
+        assertEquals(PetState.BASE_HEIGHT * PetState.HOOTS_BASE_SCALE, hoots.height, 0.0)
+        assertTrue(hoots.width < seedy.width)
+        assertTrue(hoots.height < seedy.height)
+    }
+
+    @Test
     fun hootsSnapshotCarriesLiveChatGptBubbleSetting() {
         val manager = manager()
         val hoots = manager.spawn(1, PetSpecies.HOOTS).single()

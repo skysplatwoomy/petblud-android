@@ -78,7 +78,7 @@ class PetOverlayMenuView(
             }
         }
         val physicsValue = findViewById<TextView>(R.id.menuPhysicsValue)
-        findViewById<Slider>(R.id.menuPhysics).apply {
+        val physicsSlider = findViewById<Slider>(R.id.menuPhysics).apply {
             contentDescription = context.getString(
                 if (species == PetSpecies.SEEDY) R.string.physics_for_seedy else R.string.physics_for_hoots,
             )
@@ -87,6 +87,20 @@ class PetOverlayMenuView(
             addOnChangeListener { _, current, fromUser ->
                 physicsValue.text = formatPhysics(current)
                 if (fromUser) listener.onPhysicsChanged(current.toDouble())
+            }
+        }
+        physicsValue.setOnClickListener {
+            NumericInputDialog.show(
+                context = context,
+                title = context.getString(R.string.edit_physics_multiplier),
+                currentValue = physicsSlider.value.toDouble(),
+                minimum = PetSettings.MIN_PHYSICS_MULTIPLIER,
+                maximum = PetSettings.MAX_PHYSICS_MULTIPLIER,
+                decimalPlaces = 1,
+                stepSize = 0.1,
+            ) { value ->
+                physicsSlider.value = value.toFloat()
+                listener.onPhysicsChanged(value)
             }
         }
 

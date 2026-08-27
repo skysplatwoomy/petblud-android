@@ -1,14 +1,14 @@
 # Build verification
 
-Verification performed on 2026-08-27 for PetBlud 0.6.1.
+Verification performed on 2026-08-27 for PetBlud 0.7.0.
 
 ## Automated checks
 
-- `testDebugUnitTest`: 38 tests, 0 failures, 0 errors.
-- `testReleaseUnitTest`: 38 tests, 0 failures, 0 errors.
+- `testDebugUnitTest`: 40 tests, 0 failures, 0 errors.
+- `testReleaseUnitTest`: 40 tests, 0 failures, 0 errors.
 - Android lint: no issues found, with warnings treated as errors.
 - Debug APK assembly: successful.
-- Debug instrumentation APK assembly: successful (5 device tests compiled).
+- Debug instrumentation APK assembly: successful (6 device tests compiled).
 - APK signature verification: valid Android APK Signature Scheme v2 debug signature.
 
 The test suite exercises settings bounds and opt-in defaults, delta-time
@@ -26,12 +26,15 @@ routing when one or both pets enable tilt and shake.
 The Hoots idle/physics update adds coverage for equal-choice book, writing, and
 wing-movement idle activities; floating idle animation; force suppression;
 dragging without throw momentum; and collision against an immovable Hoots.
-Version 0.6.1 adds package filtering, text sanitization and length limits,
+Version 0.6.1 introduced package filtering, text sanitization and length limits,
 newest-active selection, update/removal fallback, disabled/disconnected cache
 clearing, and edge/keyboard-safe Hoots bubble placement coverage.
 The appearance follow-up adds coverage for default/reset values, colour and
 opacity normalization, passive versus interactive window flags, the live
 hold-menu setting snapshot, and Hoots-only idle sprite normalization.
+Version 0.7.0 adds regression coverage for independent border/fill/text
+opacity bounds, typed-number parsing/clamping/step snapping, and Hoots's
+species-level 100% size baseline.
 
 The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 192 x 208 cell grid as Seedy. Imported sheet SHA-256:
@@ -42,11 +45,11 @@ The Hoots sheet is a 1536 x 2288 RGBA WebP arranged as the same 8 x 11,
 
 ## Artifact
 
-The root output directory contains `PetBlud-0.6.1-debug.apk`.
+The root output directory contains `PetBlud-0.7.0-debug.apk`.
 
 ```text
-Size: 11,844,066 bytes
-SHA-256: 42421fc4f92301ac90dcc7ada0ac1a62290773b38d80015a8d6470f8c885eeb9
+Size: 11,864,742 bytes
+SHA-256: 87797e2766b7d4bc675617d6060e55c8cfaf8fe7bc23910ec35d069de5dcf78a
 ```
 
 ## Remaining device checks
@@ -64,10 +67,10 @@ overlay checks, repeated Hoots wake requests, cross-collision behavior,
 independent motion/keyboard settings, pager swipes, and both species' menus.
 The Hoots physics-interaction toggle still needs touch, blast, sensor-shake,
 floating-idle, and cross-collision acceptance testing on a physical device.
-Version 0.6.1 additionally needs notification-access grant/revoke checks, real
+Version 0.7.0 additionally needs notification-access grant/revoke checks, real
 ChatGPT post/update/removal events, in-memory caching while Hoots is absent,
 bubble following and touch pass-through, keyboard clamping, listener reconnect,
 and confirmation that every non-ChatGPT package is ignored.
-Bubble colour/opacity rendering, reset behavior, hold-menu disabling,
+Bubble colour/independent opacity rendering, typed numeric input, reset behavior, hold-menu disabling,
 tap-to-open, touch pass-through in both interaction modes, and visual sprite
 scale consistency also remain physical-device acceptance checks.

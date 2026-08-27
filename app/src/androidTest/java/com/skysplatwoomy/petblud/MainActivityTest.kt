@@ -6,6 +6,11 @@ import android.os.Build
 import android.provider.Settings
 import android.view.View
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.viewpager2.widget.ViewPager2
@@ -43,6 +48,8 @@ class MainActivityTest {
                     View.GONE,
                     dashboard.findViewById<View>(R.id.chatGptNotificationsCard).visibility,
                 )
+                assertTrue(dashboard.findViewById<View>(R.id.physicsValue).isClickable)
+                assertTrue(dashboard.findViewById<View>(R.id.sizeValue).isClickable)
                 assertTrue(dashboard.findViewById<View>(R.id.heroAction).minimumHeight >= 0)
                 assertSame(
                     activity.findViewById<View>(R.id.topBar).parent,
@@ -85,6 +92,7 @@ class MainActivityTest {
                     if (notificationSwitch.isChecked) View.VISIBLE else View.GONE,
                     hootsDashboard.findViewById<View>(R.id.bubbleAppearanceControls).visibility,
                 )
+                assertTrue(hootsDashboard.findViewById<View>(R.id.bubbleTextOpacityValue).isClickable)
                 assertEquals("Hoots", hootsDashboard.findViewById<View>(R.id.heroPet).contentDescription)
                 assertEquals(
                     activity.getColor(R.color.hoots_orange),
@@ -152,9 +160,26 @@ class MainActivityTest {
                 val toggle = menu.findViewById<MaterialSwitch>(R.id.menuChatGptBubble)
                 assertEquals(View.VISIBLE, toggle.visibility)
                 assertTrue(toggle.isChecked)
+                assertTrue(menu.findViewById<View>(R.id.menuPhysicsValue).isClickable)
                 toggle.isChecked = false
                 assertEquals(false, changed)
             }
+        }
+    }
+
+    @Test
+    fun hootsBorderColourPickerOpensWithoutCrashing() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.findViewById<ViewPager2>(R.id.petPager)
+                    .setCurrentItem(PetSpecies.HOOTS.ordinal, false)
+                activity.supportFragmentManager.executePendingTransactions()
+                val dashboard = activity.supportFragmentManager.findFragmentByTag("f1")
+                    ?.requireView() ?: error("Hoots dashboard was not created")
+                dashboard.findViewById<View>(R.id.bubbleBorderColorButton).performClick()
+            }
+            onView(withText(R.string.choose_bubble_border)).check(matches(isDisplayed()))
+            pressBack()
         }
     }
 }

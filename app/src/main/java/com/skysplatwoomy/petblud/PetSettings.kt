@@ -13,7 +13,9 @@ data class PetSettings(
     val showChatGptNotifications: Boolean = false,
     val bubbleBorderColor: Int = DEFAULT_BUBBLE_BORDER_COLOR,
     val bubbleFillColor: Int = DEFAULT_BUBBLE_FILL_COLOR,
-    val bubbleOpacityPercent: Double = DEFAULT_BUBBLE_OPACITY_PERCENT,
+    val bubbleBorderOpacityPercent: Double = DEFAULT_BUBBLE_OPACITY_PERCENT,
+    val bubbleFillOpacityPercent: Double = DEFAULT_BUBBLE_OPACITY_PERCENT,
+    val bubbleTextOpacityPercent: Double = DEFAULT_BUBBLE_OPACITY_PERCENT,
     val bubbleTapOpensChatGpt: Boolean = false,
 ) {
     fun normalized(): PetSettings = copy(
@@ -21,7 +23,15 @@ data class PetSettings(
         sizePercent = sizePercent.coerceIn(MIN_SIZE_PERCENT, MAX_SIZE_PERCENT),
         bubbleBorderColor = opaqueColor(bubbleBorderColor),
         bubbleFillColor = opaqueColor(bubbleFillColor),
-        bubbleOpacityPercent = bubbleOpacityPercent.coerceIn(
+        bubbleBorderOpacityPercent = bubbleBorderOpacityPercent.coerceIn(
+            MIN_BUBBLE_OPACITY_PERCENT,
+            MAX_BUBBLE_OPACITY_PERCENT,
+        ),
+        bubbleFillOpacityPercent = bubbleFillOpacityPercent.coerceIn(
+            MIN_BUBBLE_OPACITY_PERCENT,
+            MAX_BUBBLE_OPACITY_PERCENT,
+        ),
+        bubbleTextOpacityPercent = bubbleTextOpacityPercent.coerceIn(
             MIN_BUBBLE_OPACITY_PERCENT,
             MAX_BUBBLE_OPACITY_PERCENT,
         ),
@@ -35,7 +45,7 @@ data class PetSettings(
         const val DEFAULT_BUBBLE_BORDER_COLOR: Int = -681411
         const val DEFAULT_BUBBLE_FILL_COLOR: Int = -3385
         const val DEFAULT_BUBBLE_OPACITY_PERCENT = 100.0
-        const val MIN_BUBBLE_OPACITY_PERCENT = 20.0
+        const val MIN_BUBBLE_OPACITY_PERCENT = 0.0
         const val MAX_BUBBLE_OPACITY_PERCENT = 100.0
 
         private fun opaqueColor(color: Int): Int = color or (0xFF shl 24)

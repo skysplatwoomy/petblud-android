@@ -191,12 +191,24 @@ class UiLogicTest {
         val normalized = PetSettings(
             bubbleBorderColor = 0x00112233,
             bubbleFillColor = 0x00445566,
-            bubbleOpacityPercent = -50.0,
+            bubbleBorderOpacityPercent = -50.0,
+            bubbleFillOpacityPercent = 150.0,
+            bubbleTextOpacityPercent = 45.0,
         ).normalized()
 
         assertEquals(0xFF112233.toInt(), normalized.bubbleBorderColor)
         assertEquals(0xFF445566.toInt(), normalized.bubbleFillColor)
-        assertEquals(PetSettings.MIN_BUBBLE_OPACITY_PERCENT, normalized.bubbleOpacityPercent, 0.0)
+        assertEquals(
+            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
+            normalized.bubbleBorderOpacityPercent,
+            0.0,
+        )
+        assertEquals(
+            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
+            normalized.bubbleFillOpacityPercent,
+            0.0,
+        )
+        assertEquals(45.0, normalized.bubbleTextOpacityPercent, 0.0)
         assertEquals(
             SpriteVisualScale.HOOTS_IDLE_SCALE,
             SpriteVisualScale.forAnimation(PetSpecies.HOOTS, PetAnimation.IDLE),
@@ -210,6 +222,17 @@ class UiLogicTest {
         assertTrue(passiveFlags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0)
         assertEquals(0, interactiveFlags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
         assertTrue(interactiveFlags and WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL != 0)
+    }
+
+    @Test
+    fun typedNumericEntryAcceptsDecimalCommaRejectsInvalidAndClampsRange() {
+        assertEquals(2.5, NumericEntry.parseAndClamp("2,5", 0.1, 5.0) ?: 0.0, 0.0)
+        assertEquals(5.0, NumericEntry.parseAndClamp("99", 0.1, 5.0) ?: 0.0, 0.0)
+        assertEquals(10.0, NumericEntry.parseAndClamp("-4", 10.0, 500.0) ?: 0.0, 0.0)
+        assertNull(NumericEntry.parseAndClamp("hello", 0.0, 100.0))
+        assertNull(NumericEntry.parseAndClamp("NaN", 0.0, 100.0))
+        assertEquals(1.3, NumericEntry.snap(1.26, 0.1, 5.0, 0.1), 0.0001)
+        assertEquals("1.3", NumericEntry.format(1.25, 1))
     }
 
     private fun payload(

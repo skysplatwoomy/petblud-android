@@ -23,6 +23,8 @@ class SettingsRepository(context: Context) {
             if (error is IOException) emit(emptyPreferences()) else throw error
         }
         .map { preferences ->
+            val legacyBubbleOpacity = preferences[HOOTS_BUBBLE_OPACITY_PERCENT]
+                ?: PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
             val seedy = PetSettings(
                 gravity = preferences[GRAVITY] ?: true,
                 tiltGravity = preferences[TILT_GRAVITY] ?: false,
@@ -50,7 +52,11 @@ class SettingsRepository(context: Context) {
                     ?: PetSettings.DEFAULT_BUBBLE_BORDER_COLOR,
                 bubbleFillColor = preferences[HOOTS_BUBBLE_FILL_COLOR]
                     ?: PetSettings.DEFAULT_BUBBLE_FILL_COLOR,
-                bubbleOpacityPercent = preferences[HOOTS_BUBBLE_OPACITY_PERCENT]
+                bubbleBorderOpacityPercent = preferences[HOOTS_BUBBLE_BORDER_OPACITY_PERCENT]
+                    ?: legacyBubbleOpacity,
+                bubbleFillOpacityPercent = preferences[HOOTS_BUBBLE_FILL_OPACITY_PERCENT]
+                    ?: legacyBubbleOpacity,
+                bubbleTextOpacityPercent = preferences[HOOTS_BUBBLE_TEXT_OPACITY_PERCENT]
                     ?: PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT,
                 bubbleTapOpensChatGpt = preferences[HOOTS_BUBBLE_TAP_OPENS_CHATGPT] ?: false,
             ).normalized()
@@ -124,7 +130,9 @@ class SettingsRepository(context: Context) {
         preferences[HOOTS_SHOW_CHATGPT_NOTIFICATIONS] = value.showChatGptNotifications
         preferences[HOOTS_BUBBLE_BORDER_COLOR] = value.bubbleBorderColor
         preferences[HOOTS_BUBBLE_FILL_COLOR] = value.bubbleFillColor
-        preferences[HOOTS_BUBBLE_OPACITY_PERCENT] = value.bubbleOpacityPercent
+        preferences[HOOTS_BUBBLE_BORDER_OPACITY_PERCENT] = value.bubbleBorderOpacityPercent
+        preferences[HOOTS_BUBBLE_FILL_OPACITY_PERCENT] = value.bubbleFillOpacityPercent
+        preferences[HOOTS_BUBBLE_TEXT_OPACITY_PERCENT] = value.bubbleTextOpacityPercent
         preferences[HOOTS_BUBBLE_TAP_OPENS_CHATGPT] = value.bubbleTapOpensChatGpt
     }
 
@@ -152,6 +160,12 @@ class SettingsRepository(context: Context) {
         private val HOOTS_BUBBLE_FILL_COLOR = intPreferencesKey("hoots_bubble_fill_color")
         private val HOOTS_BUBBLE_OPACITY_PERCENT =
             doublePreferencesKey("hoots_bubble_opacity_percent")
+        private val HOOTS_BUBBLE_BORDER_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_border_opacity_percent")
+        private val HOOTS_BUBBLE_FILL_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_fill_opacity_percent")
+        private val HOOTS_BUBBLE_TEXT_OPACITY_PERCENT =
+            doublePreferencesKey("hoots_bubble_text_opacity_percent")
         private val HOOTS_BUBBLE_TAP_OPENS_CHATGPT =
             booleanPreferencesKey("hoots_bubble_tap_opens_chatgpt")
         private val SEEDY_HOOTS_COLLISION = booleanPreferencesKey("seedy_hoots_collision")

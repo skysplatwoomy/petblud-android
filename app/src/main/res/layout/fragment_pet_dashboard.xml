@@ -287,23 +287,27 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/bubble_opacity"
+                            android:text="@string/bubble_text_opacity"
                             android:textAppearance="@style/TextAppearance.PetBlud.Body" />
 
                         <TextView
-                            android:id="@+id/bubbleOpacityValue"
+                            android:id="@+id/bubbleTextOpacityValue"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:minWidth="48dp"
                             android:textAppearance="@style/TextAppearance.PetBlud.Support" />
                     </LinearLayout>
 
                     <com.google.android.material.slider.Slider
-                        android:id="@+id/bubbleOpacitySlider"
+                        android:id="@+id/bubbleTextOpacitySlider"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:contentDescription="@string/bubble_opacity"
+                        android:contentDescription="@string/bubble_text_opacity"
                         android:stepSize="1"
-                        android:valueFrom="20"
+                        android:valueFrom="0"
                         android:valueTo="100" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
@@ -418,7 +422,11 @@
                     <TextView
                         android:id="@+id/physicsValue"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:minWidth="48dp"
                         android:textAppearance="@style/TextAppearance.PetBlud.Support" />
                 </LinearLayout>
 
@@ -448,7 +456,11 @@
                     <TextView
                         android:id="@+id/sizeValue"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:minWidth="48dp"
                         android:textAppearance="@style/TextAppearance.PetBlud.Support" />
                 </LinearLayout>
 

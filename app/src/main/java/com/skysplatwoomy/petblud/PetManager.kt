@@ -52,8 +52,8 @@ class PetManager(
         val bounds = boundsFor(species)
         return buildList {
             repeat(actualCount) {
-                val width = PetState.BASE_WIDTH * settings.sizePercent / 100.0
-                val height = PetState.BASE_HEIGHT * settings.sizePercent / 100.0
+                val width = PetState.baseWidth(species) * settings.sizePercent / 100.0
+                val height = PetState.baseHeight(species) * settings.sizePercent / 100.0
                 val pet = PetState(
                     id = nextId++,
                     species = species,

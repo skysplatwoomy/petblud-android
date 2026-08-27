@@ -17,6 +17,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 class PetDashboardFragment : Fragment() {
@@ -63,8 +64,8 @@ class PetDashboardFragment : Fragment() {
     private lateinit var bubbleAppearanceControls: View
     private lateinit var bubbleBorderColorButton: MaterialButton
     private lateinit var bubbleFillColorButton: MaterialButton
-    private lateinit var bubbleOpacitySlider: Slider
-    private lateinit var bubbleOpacityValue: TextView
+    private lateinit var bubbleTextOpacitySlider: Slider
+    private lateinit var bubbleTextOpacityValue: TextView
     private lateinit var resetBubbleAppearanceButton: MaterialButton
     private lateinit var bubbleTapOpensChatGptSwitch: MaterialSwitch
     private lateinit var motionChildren: LinearLayout
@@ -76,6 +77,8 @@ class PetDashboardFragment : Fragment() {
     private var saveRevision = 0L
     private var bubbleBorderColor = PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
     private var bubbleFillColor = PetSettings.DEFAULT_BUBBLE_FILL_COLOR
+    private var bubbleBorderOpacity = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+    private var bubbleFillOpacity = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
 
     private val statusRefresh = object : Runnable {
         override fun run() {
@@ -162,8 +165,8 @@ class PetDashboardFragment : Fragment() {
         bubbleAppearanceControls = root.findViewById(R.id.bubbleAppearanceControls)
         bubbleBorderColorButton = root.findViewById(R.id.bubbleBorderColorButton)
         bubbleFillColorButton = root.findViewById(R.id.bubbleFillColorButton)
-        bubbleOpacitySlider = root.findViewById(R.id.bubbleOpacitySlider)
-        bubbleOpacityValue = root.findViewById(R.id.bubbleOpacityValue)
+        bubbleTextOpacitySlider = root.findViewById(R.id.bubbleTextOpacitySlider)
+        bubbleTextOpacityValue = root.findViewById(R.id.bubbleTextOpacityValue)
         resetBubbleAppearanceButton = root.findViewById(R.id.resetBubbleAppearanceButton)
         bubbleTapOpensChatGptSwitch = root.findViewById(R.id.bubbleTapOpensChatGptSwitch)
         motionChildren = root.findViewById(R.id.motionChildren)
@@ -242,34 +245,40 @@ class PetDashboardFragment : Fragment() {
         }
         bubbleBorderColorButton.setOnClickListener {
             BubbleColorPickerDialog.show(
-                requireContext(),
+                root.context,
                 getString(R.string.choose_bubble_border),
                 bubbleBorderColor,
-            ) { color ->
-                bubbleBorderColor = color
+                bubbleBorderOpacity,
+            ) { selection ->
+                bubbleBorderColor = selection.color
+                bubbleBorderOpacity = selection.opacityPercent
                 refreshBubbleAppearanceControls()
                 saveImmediatelyIfReady()
             }
         }
         bubbleFillColorButton.setOnClickListener {
             BubbleColorPickerDialog.show(
-                requireContext(),
+                root.context,
                 getString(R.string.choose_bubble_fill),
                 bubbleFillColor,
-            ) { color ->
-                bubbleFillColor = color
+                bubbleFillOpacity,
+            ) { selection ->
+                bubbleFillColor = selection.color
+                bubbleFillOpacity = selection.opacityPercent
                 refreshBubbleAppearanceControls()
                 saveImmediatelyIfReady()
             }
         }
-        bubbleOpacitySlider.addOnChangeListener { _, value, fromUser ->
-            bubbleOpacityValue.text = String.format(Locale.getDefault(), "%.0f%%", value)
+        bubbleTextOpacitySlider.addOnChangeListener { _, value, fromUser ->
+            bubbleTextOpacityValue.text = String.format(Locale.getDefault(), "%.0f%%", value)
             if (fromUser && !hydrating) queueSliderSave()
         }
         resetBubbleAppearanceButton.setOnClickListener {
             bubbleBorderColor = PetSettings.DEFAULT_BUBBLE_BORDER_COLOR
             bubbleFillColor = PetSettings.DEFAULT_BUBBLE_FILL_COLOR
-            bubbleOpacitySlider.value = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT.toFloat()
+            bubbleBorderOpacity = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+            bubbleFillOpacity = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+            bubbleTextOpacitySlider.value = PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT.toFloat()
             refreshBubbleAppearanceControls()
             saveImmediatelyIfReady()
         }
@@ -281,6 +290,30 @@ class PetDashboardFragment : Fragment() {
             sizeValue.text = String.format(Locale.getDefault(), "%.0f%%", value)
             if (fromUser && !hydrating) queueSliderSave()
         }
+        bindTypedSliderValue(
+            physicsValue,
+            physicsSlider,
+            R.string.edit_physics_multiplier,
+            PetSettings.MIN_PHYSICS_MULTIPLIER,
+            PetSettings.MAX_PHYSICS_MULTIPLIER,
+            decimalPlaces = 1,
+        )
+        bindTypedSliderValue(
+            sizeValue,
+            sizeSlider,
+            R.string.edit_pet_size,
+            PetSettings.MIN_SIZE_PERCENT,
+            PetSettings.MAX_SIZE_PERCENT,
+            decimalPlaces = 0,
+        )
+        bindTypedSliderValue(
+            bubbleTextOpacityValue,
+            bubbleTextOpacitySlider,
+            R.string.edit_text_opacity,
+            PetSettings.MIN_BUBBLE_OPACITY_PERCENT,
+            PetSettings.MAX_BUBBLE_OPACITY_PERCENT,
+            decimalPlaces = 0,
+        )
         spawnButton.setOnClickListener { host.requestPetStart(species, 1) }
         detonateButton.setOnClickListener {
             if (PetOverlayService.statusSnapshot().count(species) > 0) {
@@ -305,7 +338,9 @@ class PetDashboardFragment : Fragment() {
         chatGptNotificationsSwitch.isChecked = settings.showChatGptNotifications
         bubbleBorderColor = settings.bubbleBorderColor
         bubbleFillColor = settings.bubbleFillColor
-        bubbleOpacitySlider.value = settings.bubbleOpacityPercent.toFloat()
+        bubbleBorderOpacity = settings.bubbleBorderOpacityPercent
+        bubbleFillOpacity = settings.bubbleFillOpacityPercent
+        bubbleTextOpacitySlider.value = settings.bubbleTextOpacityPercent.toFloat()
         bubbleTapOpensChatGptSwitch.isChecked = settings.bubbleTapOpensChatGpt
         refreshBubbleAppearanceControls()
         refreshNotificationControls()
@@ -339,8 +374,18 @@ class PetDashboardFragment : Fragment() {
         } else {
             PetSettings.DEFAULT_BUBBLE_FILL_COLOR
         },
-        bubbleOpacityPercent = if (species == PetSpecies.HOOTS) {
-            bubbleOpacitySlider.value.toDouble()
+        bubbleBorderOpacityPercent = if (species == PetSpecies.HOOTS) {
+            bubbleBorderOpacity
+        } else {
+            PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+        },
+        bubbleFillOpacityPercent = if (species == PetSpecies.HOOTS) {
+            bubbleFillOpacity
+        } else {
+            PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
+        },
+        bubbleTextOpacityPercent = if (species == PetSpecies.HOOTS) {
+            bubbleTextOpacitySlider.value.toDouble()
         } else {
             PetSettings.DEFAULT_BUBBLE_OPACITY_PERCENT
         },
@@ -455,22 +500,48 @@ class PetDashboardFragment : Fragment() {
         val borderHex = BubbleColorPickerDialog.formatColor(bubbleBorderColor)
         val fillHex = BubbleColorPickerDialog.formatColor(bubbleFillColor)
         bubbleBorderColorButton.text = getString(
-            R.string.bubble_color_value,
+            R.string.bubble_color_opacity_value,
             getString(R.string.bubble_border),
             borderHex,
+            bubbleBorderOpacity.roundToInt(),
         )
         bubbleFillColorButton.text = getString(
-            R.string.bubble_color_value,
+            R.string.bubble_color_opacity_value,
             getString(R.string.bubble_fill),
             fillHex,
+            bubbleFillOpacity.roundToInt(),
         )
         bubbleBorderColorButton.strokeColor = ColorStateList.valueOf(bubbleBorderColor)
         bubbleFillColorButton.strokeColor = ColorStateList.valueOf(bubbleFillColor)
-        bubbleOpacityValue.text = String.format(
+        bubbleTextOpacityValue.text = String.format(
             Locale.getDefault(),
             "%.0f%%",
-            bubbleOpacitySlider.value,
+            bubbleTextOpacitySlider.value,
         )
+    }
+
+    private fun bindTypedSliderValue(
+        valueView: TextView,
+        slider: Slider,
+        titleResource: Int,
+        minimum: Double,
+        maximum: Double,
+        decimalPlaces: Int,
+    ) {
+        valueView.setOnClickListener {
+            NumericInputDialog.show(
+                context = root.context,
+                title = getString(titleResource),
+                currentValue = slider.value.toDouble(),
+                minimum = minimum,
+                maximum = maximum,
+                decimalPlaces = decimalPlaces,
+                stepSize = slider.stepSize.toDouble(),
+            ) {
+                slider.value = it.toFloat()
+                saveImmediatelyIfReady()
+            }
+        }
     }
 
     companion object {

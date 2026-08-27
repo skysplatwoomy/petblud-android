@@ -2,7 +2,7 @@
 
 Native Kotlin port of [skysplatwoomy/petblud](https://github.com/skysplatwoomy/petblud), implemented as a user-enabled system-wide Android overlay.
 
-Current build: **0.6.1**.
+Current build: **0.7.0**.
 
 ## What is implemented
 
@@ -19,9 +19,10 @@ Current build: **0.6.1**.
 - Optional Seedy-to-Hoots collision, off by default and available only on the Hoots page. Seedy-to-Seedy collision remains independent.
 - Hoots randomly reads, writes, or moves his wings while idle. An optional Hoots-only physics lock keeps him draggable and collision-visible while blocking gravity, throws, taps, blasts, and collision impulses; floating Hoots still uses idle animations.
 - Optional Hoots ChatGPT status bubbles mirror the newest active notification from the official ChatGPT Android app. Notification text is sanitized, memory-only, and rendered in a separate non-touchable overlay that follows Hoots without blocking the app underneath.
-- Hoots bubble appearance can be customized with native HSV pickers for border and fill, 20–100% opacity, and one-tap defaults. These controls appear only when notification reading is enabled; Hoots's hold menu can disable the bubble immediately.
+- Hoots bubble appearance uses crash-safe continuous HSV pickers. Border and fill each have their own 0–100% opacity inside the picker, text has a separate opacity control, and one tap restores every default. These controls appear only when notification reading is enabled; Hoots's hold menu can disable the bubble immediately.
 - Optional tap-to-open makes only the bubble card interactive and launches the official ChatGPT app; it is off by default, and touches outside the card still pass through.
-- Hoots's visually oversized normal idle frame is rendered at a measured 90% scale so transitions to writing, reading, and wing animations no longer make him abruptly shrink.
+- Hoots uses an 85% species baseline so 100% is visually comparable to Seedy's 100%. His wider normal idle frame receives an additional measured 90% animation scale so transitions to writing, reading, and wing animations stay consistent.
+- Every editable numeric readout can be tapped to enter an exact value, including dashboard size/physics/opacity, colour-picker HSV/opacity, and long-press-menu physics.
 - Optional tilt-directed gravity using Android's gravity sensor, with an accelerometer fallback.
 - Optional shake detonation under tilt gravity. Linear shake acceleration scales the existing detonation force from 1.5× to 4×, with a 700 ms cooldown.
 - Optional gravity-relative sprite rotation under tilt gravity, with enlarged overlay bounds to avoid clipping rotated Seedys.
@@ -79,9 +80,9 @@ Open PetBlud, grant **Display over other apps**, then wake Seedy or swipe to the
 
 ## Verification
 
-The JVM suite contains 38 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, Hoots idle activities and physics locking, notification filtering/sanitization/lifecycle, bubble placement/appearance/interaction flags, sprite normalization, and per-species sensor routing.
+The JVM suite contains 40 tests per build type. It covers the existing physics and UI logic plus mixed-species coexistence, the one-Hoots limit, independent settings, Hoots idle activities and physics locking, notification filtering/sanitization/lifecycle, bubble placement/appearance/interaction flags, sprite and baseline normalization, typed numeric parsing, and per-species sensor routing.
 
-An instrumentation APK compiles five device tests for controls/accessibility, pinned-header hierarchy, pager order, Seedy/Hoots theming, Hoots-only appearance controls and hold-menu toggle, and the protected notification-listener declaration/access intent. Those tests require a device or emulator to execute.
+An instrumentation APK compiles six device tests for controls/accessibility, pinned-header hierarchy, pager order, Seedy/Hoots theming, Hoots-only appearance controls and hold-menu toggle, crash-free colour-picker opening, and the protected notification-listener declaration/access intent. Those tests require a device or emulator to execute.
 
 Device acceptance still requires an Android device or emulator with overlay and notification-listener access. Test API 26, API 31, and API 34 or newer, including real ChatGPT post/update/removal events, rotation, keyboard visibility, screen-off/resume, process restart, and touch pass-through beneath the bubble.
 
